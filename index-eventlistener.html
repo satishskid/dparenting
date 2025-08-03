@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SKIDS Interactive Training - Event Listener Version</title>
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- Firebase CDN Scripts -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-analytics-compat.js"></script>
+</head>
+<body>
+    <!-- Auth Button -->
+    <div class="auth-container" id="authButton">
+        <button class="btn btn--primary" id="mainAuthButton">
+            Sign In / Sign Up
+        </button>
+    </div>
+
+    <!-- Landing Page -->
+    <div class="container" id="landingPage">
+        <div class="hero">
+            <h1>SKIDS Interactive Training Module</h1>
+            <p class="subtitle">Digital Parenting Skills for Modern Families</p>
+            <button class="btn btn--secondary" id="landingAuthButton">Get Started</button>
+        </div>
+    </div>
+
+    <!-- Rest of the content from original index.html -->
+    <!-- Training Navigation (hidden initially) -->
+    <nav class="training-nav" id="trainingNav">
+        <!-- Navigation content -->
+    </nav>
+
+    <!-- Training Content -->
+    <div class="training-content" id="trainingContent">
+        <!-- Training sections -->
+    </div>
+
+    <!-- Load app.js -->
+    <script src="app.js"></script>
+    
+    <script>
+        // Manual event listener setup
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Setting up event listeners...');
+            
+            // Main auth button
+            const mainAuthBtn = document.getElementById('mainAuthButton');
+            if (mainAuthBtn) {
+                mainAuthBtn.addEventListener('click', function() {
+                    console.log('Main auth button clicked');
+                    if (typeof window.openAuthModal === 'function') {
+                        window.openAuthModal();
+                    } else {
+                        console.error('openAuthModal not available');
+                        alert('Authentication system is loading. Please try again in a moment.');
+                    }
+                });
+                console.log('Main auth button listener attached');
+            }
+            
+            // Landing auth button
+            const landingAuthBtn = document.getElementById('landingAuthButton');
+            if (landingAuthBtn) {
+                landingAuthBtn.addEventListener('click', function() {
+                    console.log('Landing auth button clicked');
+                    if (typeof window.openAuthModal === 'function') {
+                        window.openAuthModal();
+                    } else {
+                        console.error('openAuthModal not available');
+                        alert('Authentication system is loading. Please try again in a moment.');
+                    }
+                });
+                console.log('Landing auth button listener attached');
+            }
+            
+            // Wait a bit and try again if functions aren't ready
+            setTimeout(function() {
+                if (typeof window.openAuthModal !== 'function') {
+                    console.warn('openAuthModal still not available after 2 seconds');
+                }
+            }, 2000);
+        });
+    </script>
+</body>
+</html>

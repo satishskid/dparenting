@@ -34,6 +34,7 @@ try {
 let currentUser = null;
 let currentSchool = null;
 let isAdmin = false;
+let databasePermissionIssue = false; // Track if we have permission issues
 let trainingProgress = {
   'brain-needs': false,
   'storyboards': false,
@@ -323,6 +324,20 @@ async function trackSectionComplete(sectionId) {
     
   } catch (error) {
     console.error('Error tracking section completion:', error);
+    
+    // Handle permission errors gracefully
+    if (error.code === 'permission-denied') {
+      console.warn('⚠️ Database permissions not configured yet. Progress saved locally only.');
+      
+      // Show user-friendly notification only once
+      if (!databasePermissionIssue) {
+        databasePermissionIssue = true;
+        showNotification('Training progress is being saved locally. Full sync will be enabled soon!', 'warning');
+      }
+      
+      // Save to localStorage as fallback
+      localStorage.setItem('skids_progress', JSON.stringify(trainingProgress));
+    }
   }
 }
 
@@ -345,6 +360,31 @@ async function loadUserProgress(userId) {
     }
   } catch (error) {
     console.error('Error loading user progress:', error);
+    
+    // Handle permission errors gracefully
+    if (error.code === 'permission-denied') {
+      console.warn('⚠️ Database permissions not configured. Loading from localStorage fallback.');
+      
+      // Show user-friendly notification only once
+      if (!databasePermissionIssue) {
+        databasePermissionIssue = true;
+        showNotification('Loading your saved progress. Database sync will be enabled soon!', 'info');
+      }
+      
+      // Load from localStorage as fallback
+      const localProgress = localStorage.getItem('skids_progress');
+      if (localProgress) {
+        try {
+          const parsedProgress = JSON.parse(localProgress);
+          Object.keys(trainingProgress).forEach(section => {
+            trainingProgress[section] = parsedProgress[section] || false;
+          });
+          updateProgressBar();
+        } catch (e) {
+          console.error('Error parsing local progress:', e);
+        }
+      }
+    }
   }
 }
 
@@ -391,6 +431,17 @@ async function trackUserSession(user) {
     
   } catch (error) {
     console.error('Error tracking user session:', error);
+    
+    // Handle permission errors gracefully
+    if (error.code === 'permission-denied') {
+      console.warn('⚠️ Database permissions not configured. Session tracking disabled temporarily.');
+      // Still log analytics event even if database fails
+      analytics.logEvent('session_start_fallback', {
+        user_id: user.uid,
+        school: currentSchool || 'direct',
+        timestamp: new Date().toISOString()
+      });
+    }
   }
 }
 

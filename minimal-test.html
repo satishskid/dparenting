@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minimal Test</title>
+</head>
+<body>
+    <h1>Minimal Authentication Test</h1>
+    <button id="testBtn" onclick="testFunction()">Test Function</button>
+    <div id="status"></div>
+    
+    <script>
+        function log(message) {
+            document.getElementById('status').innerHTML += '<p>' + message + '</p>';
+            console.log(message);
+        }
+        
+        function testFunction() {
+            log('Test function called successfully!');
+        }
+        
+        // Test if onclick works at all
+        log('Script loaded. Testing onclick functionality...');
+        
+        // Alternative button setup
+        document.addEventListener('DOMContentLoaded', function() {
+            log('DOM loaded');
+            
+            // Try to access the original function
+            if (typeof window.openAuthModal === 'function') {
+                log('✅ openAuthModal is available via window object');
+            } else {
+                log('❌ openAuthModal is NOT available via window object');
+            }
+            
+            // Test basic onclick
+            const btn = document.getElementById('testBtn');
+            if (btn) {
+                log('Button found, onclick should work');
+            }
+        });
+    </script>
+</body>
+</html>

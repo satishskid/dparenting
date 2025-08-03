@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SKIDS Final Test - All Features</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; border-radius: 5px; }
+        .success { background-color: #d4edda; color: #155724; }
+        .error { background-color: #f8d7da; color: #721c24; }
+        .warning { background-color: #fff3cd; color: #856404; }
+        button { margin: 5px; padding: 10px 15px; background: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        #results { margin-top: 20px; }
+        .result { padding: 10px; margin: 5px 0; border-radius: 3px; }
+    </style>
+    
+    <!-- Firebase CDN Scripts -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-analytics-compat.js"></script>
+</head>
+<body>
+    <h1>🎯 SKIDS Training Module - Final Comprehensive Test</h1>
+    <p><strong>Status:</strong> Testing all critical functionality to ensure the system is fully operational.</p>
+    
+    <div class="test-section">
+        <h2>🔧 System Tests</h2>
+        <button onclick="runAllTests()">Run All Tests</button>
+        <button onclick="testAuthenticationFlow()">Test Authentication</button>
+        <button onclick="testFirebaseConnection()">Test Firebase</button>
+        <button onclick="testSchoolTracking()">Test School Tracking</button>
+    </div>
+    
+    <div class="test-section">
+        <h2>🚀 Quick Access</h2>
+        <button onclick="window.open('index.html', '_blank')">Open Main App</button>
+        <button onclick="window.open('diagnostics.html', '_blank')">Open Diagnostics</button>
+        <button onclick="testDirectAuthModal()">Test Auth Modal</button>
+    </div>
+    
+    <div id="results"></div>
+
+    <!-- Load main app.js for testing -->
+    <script src="app.js"></script>
+    
+    <script>
+        let testResults = [];
+        
+        function addResult(test, status, message) {
+            const results = document.getElementById('results');
+            const result = document.createElement('div');
+            result.className = `result ${status}`;
+            result.innerHTML = `<strong>${test}:</strong> ${message}`;
+            results.appendChild(result);
+            
+            testResults.push({ test, status, message });
+            console.log(`${test}: ${status} - ${message}`);
+        }
+        
+        async function runAllTests() {
+            document.getElementById('results').innerHTML = '<h2>🧪 Test Results</h2>';
+            
+            // Test 1: Firebase Availability
+            try {
+                if (typeof firebase !== 'undefined') {
+                    addResult('Firebase CDN', 'success', '✅ Firebase library loaded successfully');
+                } else {
+                    addResult('Firebase CDN', 'error', '❌ Firebase library not loaded');
+                }
+            } catch (e) {
+                addResult('Firebase CDN', 'error', '❌ Error checking Firebase: ' + e.message);
+            }
+            
+            // Test 2: App.js Functions
+            const functions = ['openAuthModal', 'closeAuthModal', 'signInWithEmail', 'signUpWithEmail'];
+            functions.forEach(func => {
+                if (typeof window[func] === 'function') {
+                    addResult(`Function ${func}`, 'success', '✅ Available');
+                } else {
+                    addResult(`Function ${func}`, 'error', '❌ Not available');
+                }
+            });
+            
+            // Test 3: DOM Elements
+            const elements = ['authButton', 'landingPage', 'trainingNav'];
+            elements.forEach(elementId => {
+                const element = document.getElementById(elementId);
+                if (element) {
+                    addResult(`Element ${elementId}`, 'success', '✅ Found in DOM');
+                } else {
+                    addResult(`Element ${elementId}`, 'warning', '⚠️ Not found (may be on main page)');
+                }
+            });
+            
+            // Test 4: URL Parameters
+            const urlParams = new URLSearchParams(window.location.search);
+            const schoolParam = urlParams.get('school');
+            if (schoolParam) {
+                addResult('School Parameter', 'success', `✅ School detected: ${schoolParam}`);
+            } else {
+                addResult('School Parameter', 'warning', '⚠️ No school parameter (use ?school=test-school to test)');
+            }
+            
+            // Test 5: Local Storage
+            try {
+                localStorage.setItem('skids-test', 'test-value');
+                const testValue = localStorage.getItem('skids-test');
+                if (testValue === 'test-value') {
+                    addResult('Local Storage', 'success', '✅ Working correctly');
+                    localStorage.removeItem('skids-test');
+                } else {
+                    addResult('Local Storage', 'error', '❌ Not working correctly');
+                }
+            } catch (e) {
+                addResult('Local Storage', 'error', '❌ Error: ' + e.message);
+            }
+            
+            // Summary
+            const successCount = testResults.filter(r => r.status === 'success').length;
+            const errorCount = testResults.filter(r => r.status === 'error').length;
+            const warningCount = testResults.filter(r => r.status === 'warning').length;
+            
+            addResult('SUMMARY', successCount > errorCount ? 'success' : 'warning', 
+                `${successCount} passed, ${errorCount} failed, ${warningCount} warnings`);
+        }
+        
+        function testAuthenticationFlow() {
+            addResult('Auth Flow Test', 'warning', '🧪 Testing authentication modal...');
+            
+            try {
+                if (typeof window.openAuthModal === 'function') {
+                    addResult('Auth Modal Function', 'success', '✅ Function available, trying to call...');
+                    // Don't actually call it, just verify it exists
+                    addResult('Auth Modal Test', 'success', '✅ Function is callable (not executed to avoid modal)');
+                } else {
+                    addResult('Auth Modal Function', 'error', '❌ openAuthModal function not available');
+                }
+            } catch (e) {
+                addResult('Auth Flow Test', 'error', '❌ Error: ' + e.message);
+            }
+        }
+        
+        function testFirebaseConnection() {
+            try {
+                if (typeof firebase !== 'undefined' && firebase.apps && firebase.apps.length > 0) {
+                    addResult('Firebase Connection', 'success', '✅ Firebase app initialized');
+                    
+                    // Test individual services
+                    if (typeof firebase.auth === 'function') {
+                        addResult('Firebase Auth', 'success', '✅ Auth service available');
+                    }
+                    if (typeof firebase.firestore === 'function') {
+                        addResult('Firebase Firestore', 'success', '✅ Firestore service available');
+                    }
+                } else {
+                    addResult('Firebase Connection', 'error', '❌ Firebase not properly initialized');
+                }
+            } catch (e) {
+                addResult('Firebase Connection', 'error', '❌ Error: ' + e.message);
+            }
+        }
+        
+        function testSchoolTracking() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const schoolParam = urlParams.get('school');
+            
+            if (schoolParam) {
+                addResult('School Tracking', 'success', `✅ School parameter detected: ${schoolParam}`);
+            } else {
+                addResult('School Tracking', 'warning', '⚠️ No school parameter. Try: ?school=test-school');
+            }
+            
+            // Test school URL generation
+            const testSchoolUrl = `${window.location.origin}${window.location.pathname}?school=test-school`;
+            addResult('School URL Format', 'success', `✅ Test URL: ${testSchoolUrl}`);
+        }
+        
+        function testDirectAuthModal() {
+            if (typeof window.openAuthModal === 'function') {
+                try {
+                    window.openAuthModal();
+                    addResult('Direct Auth Test', 'success', '✅ Auth modal opened successfully');
+                } catch (e) {
+                    addResult('Direct Auth Test', 'error', '❌ Error opening modal: ' + e.message);
+                }
+            } else {
+                addResult('Direct Auth Test', 'error', '❌ openAuthModal function not available');
+            }
+        }
+        
+        // Auto-run basic tests on load
+        window.addEventListener('load', function() {
+            setTimeout(() => {
+                console.log('🚀 Auto-running basic tests...');
+                testFirebaseConnection();
+                testAuthenticationFlow();
+            }, 1000);
+        });
+    </script>
+</body>
+</html>
