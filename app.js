@@ -1,4 +1,6 @@
 // Firebase Configuration and Initialization
+console.log('Starting app.js initialization...');
+
 const firebaseConfig = {
   apiKey: "AIzaSyADH2-JCBuG1q8FOx50VoD-ZiO0BZvCT0M",
   authDomain: "digital-parenting-app.firebaseapp.com",
@@ -9,13 +11,24 @@ const firebaseConfig = {
   measurementId: "G-RSNW4ZPELE"
 };
 
-// Initialize Firebase
-firebase.initializeApp(firebaseConfig);
-const analytics = firebase.analytics();
-const auth = firebase.auth();
-const db = firebase.firestore();
-const storage = firebase.storage();
-const googleProvider = new firebase.auth.GoogleAuthProvider();
+// Initialize Firebase with error handling
+let analytics, auth, db, storage, googleProvider;
+
+try {
+  console.log('Firebase object available:', typeof firebase);
+  firebase.initializeApp(firebaseConfig);
+  console.log('Firebase app initialized');
+  
+  analytics = firebase.analytics();
+  auth = firebase.auth();
+  db = firebase.firestore();
+  storage = firebase.storage();
+  googleProvider = new firebase.auth.GoogleAuthProvider();
+  
+  console.log('Firebase services initialized successfully');
+} catch (error) {
+  console.error('Firebase initialization error:', error);
+}
 
 // Global state
 let currentUser = null;
@@ -383,11 +396,19 @@ async function trackUserSession(user) {
 
 // Modal Functions
 function openAuthModal() {
-  const modal = document.getElementById('authModal');
-  if (modal) {
-    modal.classList.remove('hidden');
-  } else {
-    createAuthModal();
+  console.log('openAuthModal called');
+  try {
+    const modal = document.getElementById('authModal');
+    console.log('Modal element found:', !!modal);
+    if (modal) {
+      modal.classList.remove('hidden');
+      console.log('Modal shown');
+    } else {
+      console.log('Creating auth modal...');
+      createAuthModal();
+    }
+  } catch (error) {
+    console.error('Error in openAuthModal:', error);
   }
 }
 
@@ -1490,9 +1511,14 @@ window.saveSettings = saveSettings;
 window.exportData = exportData;
 window.clearAnalytics = clearAnalytics;
 
+console.log('Functions exposed to global scope');
+console.log('window.openAuthModal:', typeof window.openAuthModal);
+
 // Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
+  console.log('DOM loaded, initializing app...');
   initializeSkidsApp();
   addAuthButton();
   initializeBackToTop();
+  console.log('App initialization complete');
 });
