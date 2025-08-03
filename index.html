@@ -13,6 +13,16 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-analytics-compat.js"></script>
+    
+    <!-- Firebase Check -->
+    <script>
+        console.log('Firebase availability check:', typeof firebase);
+        if (typeof firebase === 'undefined') {
+            console.error('❌ Firebase not loaded! Check CDN availability.');
+        } else {
+            console.log('✅ Firebase CDN loaded successfully');
+        }
+    </script>
 </head>
 <body>
     <!-- Auth Button -->
@@ -896,6 +906,36 @@
     <!-- Back to Top Button -->
     <button class="back-to-top" id="backToTop" onclick="scrollToTop()">↑</button>
 
+    <!-- Debug Script -->
+    <script>
+        console.log('Inline script loading...');
+        
+        // Fallback function in case app.js fails
+        function openAuthModalFallback() {
+            console.log('Fallback openAuthModal called');
+            alert('Authentication system is being loaded. Please try again in a moment.');
+        }
+        
+        // Set fallback initially
+        window.openAuthModal = window.openAuthModal || openAuthModalFallback;
+        
+        console.log('Initial openAuthModal type:', typeof window.openAuthModal);
+    </script>
+
     <script src="app.js"></script>
+    
+    <script>
+        // Verify functions are loaded after app.js
+        setTimeout(() => {
+            console.log('Post-load check - openAuthModal type:', typeof window.openAuthModal);
+            if (typeof window.openAuthModal === 'function') {
+                console.log('✅ openAuthModal is available');
+            } else {
+                console.error('❌ openAuthModal is still not available');
+                // Restore fallback
+                window.openAuthModal = openAuthModalFallback;
+            }
+        }, 100);
+    </script>
 </body>
 </html>

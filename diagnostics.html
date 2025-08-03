@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SKIDS Diagnostics</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; }
+        .success { color: green; }
+        .error { color: red; }
+        .warning { color: orange; }
+        button { margin: 5px; padding: 10px; }
+        #output { margin-top: 20px; font-family: monospace; white-space: pre-wrap; }
+    </style>
+    
+    <!-- Firebase CDN Scripts -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-analytics-compat.js"></script>
+</head>
+<body>
+    <h1>SKIDS Training Module Diagnostics</h1>
+    
+    <div class="test-section">
+        <h2>1. Firebase CDN Tests</h2>
+        <button onclick="testFirebaseAvailability()">Test Firebase CDN</button>
+    </div>
+    
+    <div class="test-section">
+        <h2>2. App.js Loading Test</h2>
+        <button onclick="testAppJsLoading()">Test App.js Functions</button>
+    </div>
+    
+    <div class="test-section">
+        <h2>3. Direct Function Test</h2>
+        <button onclick="testDirectCall()">Test Direct openAuthModal Call</button>
+    </div>
+    
+    <div class="test-section">
+        <h2>4. Console Logs</h2>
+        <button onclick="showConsoleLogs()">Show Console State</button>
+    </div>
+    
+    <div id="output"></div>
+
+    <script>
+        let logOutput = '';
+        
+        // Capture console logs
+        const originalLog = console.log;
+        const originalError = console.error;
+        
+        console.log = function(...args) {
+            logOutput += 'LOG: ' + args.join(' ') + '\n';
+            originalLog.apply(console, args);
+        };
+        
+        console.error = function(...args) {
+            logOutput += 'ERROR: ' + args.join(' ') + '\n';
+            originalError.apply(console, args);
+        };
+        
+        function output(message, type = 'info') {
+            const outputDiv = document.getElementById('output');
+            const timestamp = new Date().toLocaleTimeString();
+            outputDiv.innerHTML += `<div class="${type}">[${timestamp}] ${message}</div>`;
+        }
+        
+        function testFirebaseAvailability() {
+            output('Testing Firebase CDN availability...');
+            
+            if (typeof firebase === 'undefined') {
+                output('❌ Firebase is not loaded', 'error');
+                return;
+            }
+            
+            output('✅ Firebase object is available', 'success');
+            output(`Firebase version: ${firebase.SDK_VERSION || 'unknown'}`);
+            
+            // Test individual services
+            const services = ['auth', 'firestore', 'storage', 'analytics'];
+            services.forEach(service => {
+                if (typeof firebase[service] === 'function') {
+                    output(`✅ firebase.${service} is available`, 'success');
+                } else {
+                    output(`❌ firebase.${service} is NOT available`, 'error');
+                }
+            });
+        }
+        
+        function testAppJsLoading() {
+            output('Testing app.js function availability...');
+            
+            const functions = [
+                'openAuthModal',
+                'closeAuthModal', 
+                'signInWithEmail',
+                'signUpWithEmail',
+                'logout'
+            ];
+            
+            functions.forEach(funcName => {
+                if (typeof window[funcName] === 'function') {
+                    output(`✅ ${funcName} is available`, 'success');
+                } else {
+                    output(`❌ ${funcName} is NOT available`, 'error');
+                }
+            });
+        }
+        
+        function testDirectCall() {
+            output('Testing direct function call...');
+            
+            try {
+                if (typeof openAuthModal === 'function') {
+                    output('✅ openAuthModal function exists', 'success');
+                    // Don't actually call it, just test existence
+                    output('Function signature: ' + openAuthModal.toString().substring(0, 50) + '...');
+                } else {
+                    output('❌ openAuthModal function does not exist', 'error');
+                }
+                
+                if (typeof window.openAuthModal === 'function') {
+                    output('✅ window.openAuthModal exists', 'success');
+                } else {
+                    output('❌ window.openAuthModal does not exist', 'error');
+                }
+            } catch (error) {
+                output('❌ Error testing function: ' + error.message, 'error');
+            }
+        }
+        
+        function showConsoleLogs() {
+            output('Console logs captured so far:');
+            output(logOutput || 'No logs captured');
+        }
+        
+        // Test on page load
+        window.addEventListener('load', function() {
+            output('Page loaded, running initial tests...');
+            setTimeout(() => {
+                testFirebaseAvailability();
+                testAppJsLoading();
+            }, 1000);
+        });
+    </script>
+    
+    <!-- Load app.js -->
+    <script src="app.js"></script>
+    
+    <script>
+        // Final test after everything loads
+        setTimeout(() => {
+            output('Final check after app.js load...');
+            testDirectCall();
+            showConsoleLogs();
+        }, 2000);
+    </script>
+</body>
+</html>

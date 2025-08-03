@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Page</title>
+    
+    <!-- Firebase CDN Scripts -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-analytics-compat.js"></script>
+</head>
+<body>
+    <h1>Debug Page</h1>
+    <button onclick="testOpenAuthModal()">Test openAuthModal</button>
+    <button onclick="testFirebase()">Test Firebase</button>
+    <div id="output"></div>
+
+    <script>
+        function testFirebase() {
+            const output = document.getElementById('output');
+            try {
+                output.innerHTML += '<p>Firebase object: ' + (typeof firebase) + '</p>';
+                if (typeof firebase !== 'undefined') {
+                    output.innerHTML += '<p>Firebase.auth: ' + (typeof firebase.auth) + '</p>';
+                    output.innerHTML += '<p>Firebase.firestore: ' + (typeof firebase.firestore) + '</p>';
+                }
+            } catch (error) {
+                output.innerHTML += '<p>Firebase test error: ' + error.message + '</p>';
+            }
+        }
+
+        function testOpenAuthModal() {
+            const output = document.getElementById('output');
+            try {
+                output.innerHTML += '<p>openAuthModal type: ' + (typeof openAuthModal) + '</p>';
+                output.innerHTML += '<p>window.openAuthModal type: ' + (typeof window.openAuthModal) + '</p>';
+            } catch (error) {
+                output.innerHTML += '<p>openAuthModal test error: ' + error.message + '</p>';
+            }
+        }
+    </script>
+    
+    <!-- Load app.js after Firebase -->
+    <script src="app.js"></script>
+    
+    <script>
+        // Test after app.js loads
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(() => {
+                testFirebase();
+                testOpenAuthModal();
+            }, 1000);
+        });
+    </script>
+</body>
+</html>
