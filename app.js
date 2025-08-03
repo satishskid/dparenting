@@ -63,13 +63,8 @@ let trainingProgress = {
 // Admin Configuration
 const ADMIN_EMAIL = 'admin@skids.health'; // Change this to your admin email
 
-// Initialize the application
-document.addEventListener('DOMContentLoaded', function() {
-  initializeApp();
-});
-
 // Initialize application
-function initializeApp() {
+function initializeSkidsApp() {
   // Listen for authentication state changes
   onAuthStateChanged(auth, (user) => {
     currentUser = user;
@@ -1065,27 +1060,8 @@ function addAuthButton() {
   }
 }
 
-// Initialize auth button when DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
-  addAuthButton();
-});
-
 function initializeTooltips() {
   // Add any tooltip initialization here
-}
-
-// Add auth button to header if it doesn't exist
-function addAuthButton() {
-  if (!document.getElementById('authButton')) {
-    const authHTML = `
-      <div class="auth-container" id="authButton">
-        <button class="btn btn--primary" onclick="openAuthModal()">
-          Sign In / Sign Up
-        </button>
-      </div>
-    `;
-    document.body.insertAdjacentHTML('afterbegin', authHTML);
-  }
 }
 
 // Missing storyboard and interaction functions
@@ -1217,8 +1193,9 @@ async function loadAnalyticsData() {
   }
 }
 
-// Initialize auth button when DOM is loaded
+// Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
+  initializeSkidsApp();
   addAuthButton();
   initializeBackToTop();
 });
@@ -1252,6 +1229,3 @@ window.resetPartnerBranding = resetPartnerBranding;
 window.saveSettings = saveSettings;
 window.exportData = exportData;
 window.clearAnalytics = clearAnalytics;
-window.openAuthModal = openAuthModal;
-window.closeAuthModal = closeAuthModal;
-window.toggleAuthMode = toggleAuthMode;
