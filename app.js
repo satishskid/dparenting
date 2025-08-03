@@ -1,36 +1,4 @@
-// Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-import { getAnalytics, logEvent } from "firebase/analytics";
-import { 
-  getAuth, 
-  signInWithPopup, 
-  GoogleAuthProvider, 
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  signOut,
-  onAuthStateChanged
-} from "firebase/auth";
-import { 
-  getFirestore, 
-  doc, 
-  setDoc, 
-  getDoc, 
-  updateDoc, 
-  collection, 
-  query, 
-  where, 
-  getDocs,
-  serverTimestamp,
-  increment
-} from "firebase/firestore";
-import { 
-  getStorage, 
-  ref, 
-  uploadBytes, 
-  getDownloadURL 
-} from "firebase/storage";
-
-// Your web app's Firebase configuration
+// Firebase Configuration and Initialization
 const firebaseConfig = {
   apiKey: "AIzaSyADH2-JCBuG1q8FOx50VoD-ZiO0BZvCT0M",
   authDomain: "digital-parenting-app.firebaseapp.com",
@@ -42,12 +10,12 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-const firebaseApp = initializeApp(firebaseConfig);
-const analytics = getAnalytics(firebaseApp);
-const auth = getAuth(firebaseApp);
-const db = getFirestore(firebaseApp);
-const storage = getStorage(firebaseApp);
-const googleProvider = new GoogleAuthProvider();
+firebase.initializeApp(firebaseConfig);
+const analytics = firebase.analytics();
+const auth = firebase.auth();
+const db = firebase.firestore();
+const storage = firebase.storage();
+const googleProvider = new firebase.auth.GoogleAuthProvider();
 
 // Global state
 let currentUser = null;
@@ -66,7 +34,7 @@ const ADMIN_EMAIL = 'admin@skids.health'; // Change this to your admin email
 // Initialize application
 function initializeSkidsApp() {
   // Listen for authentication state changes
-  onAuthStateChanged(auth, (user) => {
+  auth.onAuthStateChanged((user) => {
     currentUser = user;
     isAdmin = user && user.email === ADMIN_EMAIL;
     updateUIForAuthState();
@@ -87,7 +55,7 @@ function initializeSkidsApp() {
 
 // Authentication Functions
 function signInWithGoogle() {
-  signInWithPopup(auth, googleProvider)
+  auth.signInWithPopup(googleProvider)
     .then(async (result) => {
       const user = result.user;
       await createOrUpdateUser(user);
@@ -108,7 +76,7 @@ function signInWithEmail() {
     return;
   }
   
-  signInWithEmailAndPassword(auth, email, password)
+  auth.signInWithEmailAndPassword(email, password)
     .then(async (result) => {
       await createOrUpdateUser(result.user);
       showNotification('Successfully signed in!', 'success');
@@ -135,7 +103,7 @@ function signUpWithEmail() {
     return;
   }
   
-  createUserWithEmailAndPassword(auth, email, password)
+  auth.createUserWithEmailAndPassword(email, password)
     .then(async (result) => {
       const user = result.user;
       await createOrUpdateUser(user, name);
@@ -153,7 +121,7 @@ function signUpWithEmail() {
 }
 
 function logout() {
-  signOut(auth)
+  auth.signOut()
     .then(() => {
       currentUser = null;
       isAdmin = false;
@@ -170,30 +138,30 @@ function logout() {
 // User Management
 async function createOrUpdateUser(user, displayName = null) {
   try {
-    const userRef = doc(db, 'users', user.uid);
-    const userDoc = await getDoc(userRef);
+    const userRef = db.collection('users').doc(user.uid);
+    const userDoc = await userRef.get();
     
     const userData = {
       email: user.email,
-      lastLogin: serverTimestamp(),
-      totalSessions: increment(1)
+      lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
+      totalSessions: firebase.firestore.FieldValue.increment(1)
     };
     
-    if (!userDoc.exists()) {
+    if (!userDoc.exists) {
       // New user
       userData.displayName = displayName || user.displayName || user.email.split('@')[0];
-      userData.createdAt = serverTimestamp();
+      userData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
       userData.completedSections = [];
       userData.currentSchool = getSchoolFromURL() || 'direct';
-      await setDoc(userRef, userData);
+      await userRef.set(userData);
       
       // Track new user
-      logEvent(analytics, 'sign_up', {
+      analytics.logEvent('sign_up', {
         method: user.providerData[0]?.providerId || 'email'
       });
     } else {
       // Existing user
-      await updateDoc(userRef, userData);
+      await userRef.update(userData);
     }
     
     // Track school usage
@@ -206,21 +174,21 @@ async function createOrUpdateUser(user, displayName = null) {
 
 async function trackSchoolUsage(schoolId) {
   try {
-    const schoolRef = doc(db, 'schools', schoolId);
-    const schoolDoc = await getDoc(schoolRef);
+    const schoolRef = db.collection('schools').doc(schoolId);
+    const schoolDoc = await schoolRef.get();
     
-    if (!schoolDoc.exists()) {
-      await setDoc(schoolRef, {
+    if (!schoolDoc.exists) {
+      await schoolRef.set({
         name: schoolId === 'direct' ? 'Direct Access' : schoolId,
         totalUsers: 1,
         totalSessions: 1,
-        createdAt: serverTimestamp(),
-        lastActivity: serverTimestamp()
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        lastActivity: firebase.firestore.FieldValue.serverTimestamp()
       });
     } else {
-      await updateDoc(schoolRef, {
-        totalSessions: increment(1),
-        lastActivity: serverTimestamp()
+      await schoolRef.update({
+        totalSessions: firebase.firestore.FieldValue.increment(1),
+        lastActivity: firebase.firestore.FieldValue.serverTimestamp()
       });
     }
   } catch (error) {
@@ -277,30 +245,30 @@ async function trackSectionComplete(sectionId) {
   updateProgressBar();
   
   try {
-    const userRef = doc(db, 'users', currentUser.uid);
-    await updateDoc(userRef, {
+    const userRef = db.collection('users').doc(currentUser.uid);
+    await userRef.update({
       [`progress.${sectionId}`]: true,
-      [`progress.${sectionId}_completedAt`]: serverTimestamp()
+      [`progress.${sectionId}_completedAt`]: firebase.firestore.FieldValue.serverTimestamp()
     });
     
     // Track analytics
-    logEvent(analytics, 'section_complete', {
+    analytics.logEvent('section_complete', {
       section_id: sectionId,
       user_id: currentUser.uid
     });
     
     // Track school-specific analytics
     const schoolId = currentSchool || 'direct';
-    const schoolStatsRef = doc(db, 'schoolStats', `${schoolId}_${sectionId}`);
-    await updateDoc(schoolStatsRef, {
-      completions: increment(1)
+    const schoolStatsRef = db.collection('schoolStats').doc(`${schoolId}_${sectionId}`);
+    await schoolStatsRef.update({
+      completions: firebase.firestore.FieldValue.increment(1)
     }).catch(() => {
       // Create if doesn't exist
-      setDoc(schoolStatsRef, {
+      schoolStatsRef.set({
         schoolId: schoolId,
         sectionId: sectionId,
         completions: 1,
-        lastUpdated: serverTimestamp()
+        lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
       });
     });
     
@@ -311,10 +279,10 @@ async function trackSectionComplete(sectionId) {
 
 async function loadUserProgress(userId) {
   try {
-    const userRef = doc(db, 'users', userId);
-    const userDoc = await getDoc(userRef);
+    const userRef = db.collection('users').doc(userId);
+    const userDoc = await userRef.get();
     
-    if (userDoc.exists()) {
+    if (userDoc.exists) {
       const userData = userDoc.data();
       const progress = userData.progress || {};
       
@@ -361,15 +329,15 @@ function resetProgress() {
 async function trackUserSession(user) {
   try {
     // Track session start
-    logEvent(analytics, 'session_start', {
+    analytics.logEvent('session_start', {
       user_id: user.uid,
       school: currentSchool || 'direct'
     });
     
     // Update user's last activity
-    const userRef = doc(db, 'users', user.uid);
-    await updateDoc(userRef, {
-      lastActivity: serverTimestamp()
+    const userRef = db.collection('users').doc(user.uid);
+    await userRef.update({
+      lastActivity: firebase.firestore.FieldValue.serverTimestamp()
     });
     
   } catch (error) {
@@ -542,8 +510,8 @@ async function loadAdminData() {
 
 async function loadSchoolStats() {
   try {
-    const schoolsRef = collection(db, 'schools');
-    const schoolsSnapshot = await getDocs(schoolsRef);
+    const schoolsRef = db.collection('schools');
+    const schoolsSnapshot = await schoolsRef.get();
     
     let totalUsers = 0;
     let totalSessions = 0;
@@ -610,7 +578,7 @@ function startTraining() {
   showSection('brain-needs');
   
   // Track training start
-  logEvent(analytics, 'training_start', {
+  analytics.logEvent('training_start', {
     user_id: currentUser.uid,
     school: currentSchool || 'direct'
   });
@@ -642,7 +610,7 @@ function showSection(sectionId) {
   
   // Track section view
   if (currentUser) {
-    logEvent(analytics, 'section_view', {
+    analytics.logEvent('section_view', {
       section_id: sectionId,
       user_id: currentUser.uid
     });
@@ -697,7 +665,7 @@ function generateCertificate() {
   document.getElementById('certificateModal').classList.remove('hidden');
   
   // Track certificate generation
-  logEvent(analytics, 'certificate_generated', {
+  analytics.logEvent('certificate_generated', {
     user_id: currentUser.uid,
     school: currentSchool || 'direct'
   });
@@ -781,8 +749,8 @@ function initializeModals() {
 async function loadUsageAnalytics() {
   try {
     // Load real analytics data from Firestore
-    const usersRef = collection(db, 'users');
-    const usersSnapshot = await getDocs(usersRef);
+    const usersRef = db.collection('users');
+    const usersSnapshot = await usersRef.get();
     
     let totalUsers = 0;
     let completedUsers = 0;
@@ -845,10 +813,10 @@ function updateAnalyticsCharts() {
 
 // School customization functions
 async function customizeSchool(schoolId) {
-  const schoolRef = doc(db, 'schools', schoolId);
-  const schoolDoc = await getDoc(schoolRef);
+  const schoolRef = db.collection('schools').doc(schoolId);
+  const schoolDoc = await schoolRef.get();
   
-  if (schoolDoc.exists()) {
+  if (schoolDoc.exists) {
     const schoolData = schoolDoc.data();
     // Open customization modal with school data
     showNotification(`Customizing ${schoolData.name}`, 'info');
@@ -894,19 +862,19 @@ async function savePartnerBranding() {
     let logoURL = '';
     if (logoFile) {
       // Upload logo to Firebase Storage
-      const logoRef = ref(storage, `partner-logos/${Date.now()}_${logoFile.name}`);
-      const snapshot = await uploadBytes(logoRef, logoFile);
-      logoURL = await getDownloadURL(snapshot.ref);
+      const logoRef = storage.ref(`partner-logos/${Date.now()}_${logoFile.name}`);
+      const snapshot = await logoRef.put(logoFile);
+      logoURL = await snapshot.ref.getDownloadURL();
     }
     
     // Save to Firestore
-    const partnerRef = doc(db, 'partner-branding', 'current');
-    await setDoc(partnerRef, {
+    const partnerRef = db.collection('partner-branding').doc('current');
+    await partnerRef.set({
       name: partnerName,
       email: partnerEmail,
       website: partnerWebsite,
       logoURL: logoURL,
-      updatedAt: serverTimestamp()
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     });
     
     showNotification('Partner branding saved successfully!', 'success');
@@ -936,13 +904,13 @@ function updateMainPageBranding(partnerName, logoURL) {
 
 async function resetPartnerBranding() {
   try {
-    const partnerRef = doc(db, 'partner-branding', 'current');
-    await setDoc(partnerRef, {
+    const partnerRef = db.collection('partner-branding').doc('current');
+    await partnerRef.set({
       name: '',
       email: '',
       website: '',
       logoURL: '',
-      updatedAt: serverTimestamp()
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     });
     
     // Reset form
@@ -974,19 +942,19 @@ async function saveSettings() {
     const enableCertificates = document.getElementById('enableCertificates').checked;
     const newPassword = document.getElementById('newAdminPassword').value;
     
-    const settingsRef = doc(db, 'settings', 'app');
-    await setDoc(settingsRef, {
+    const settingsRef = db.collection('settings').doc('app');
+    await settingsRef.set({
       enableAnalytics,
       showProgress,
       enableCertificates,
-      updatedAt: serverTimestamp()
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     });
     
     if (newPassword) {
       // In a real app, you'd want to hash this password
-      await setDoc(doc(db, 'settings', 'admin'), {
+      await db.collection('settings').doc('admin').set({
         password: newPassword, // This should be hashed in production
-        updatedAt: serverTimestamp()
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
       });
       document.getElementById('newAdminPassword').value = '';
     }
@@ -1108,7 +1076,7 @@ function expandNeed(needId) {
       
       // Track section interaction
       if (currentUser) {
-        logEvent(analytics, 'need_expanded', {
+        analytics.logEvent('need_expanded', {
           need_id: needId,
           user_id: currentUser.uid
         });
@@ -1122,7 +1090,7 @@ function showABCDEStep(stepId) {
   showNotification(`Learning about step: ${stepId.toUpperCase()}`, 'info');
   
   if (currentUser) {
-    logEvent(analytics, 'abcde_step_viewed', {
+    analytics.logEvent('abcde_step_viewed', {
       step_id: stepId,
       user_id: currentUser.uid
     });
@@ -1154,8 +1122,8 @@ function initializeBackToTop() {
 // Enhanced analytics data loading
 async function loadAnalyticsData() {
   try {
-    const usersRef = collection(db, 'users');
-    const usersSnapshot = await getDocs(usersRef);
+    const usersRef = db.collection('users');
+    const usersSnapshot = await usersRef.get();
     
     const data = [];
     const dateMap = new Map();
