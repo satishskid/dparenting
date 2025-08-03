@@ -64,6 +64,12 @@ function signInWithGoogle() {
       await createOrUpdateUser(user);
       showNotification('Successfully signed in with Google!', 'success');
       closeAuthModal();
+      
+      // Auto-start training after successful authentication
+      setTimeout(() => {
+        console.log('🎯 Auto-starting training after Google sign-in');
+        startTraining();
+      }, 1500);
     })
     .catch((error) => {
       console.error('Google sign-in error:', error);
@@ -99,6 +105,12 @@ function signInWithEmail() {
       await createOrUpdateUser(result.user);
       showNotification('Successfully signed in!', 'success');
       closeAuthModal();
+      
+      // Auto-start training after successful authentication
+      setTimeout(() => {
+        console.log('🎯 Auto-starting training after email sign-in');
+        startTraining();
+      }, 1500);
     })
     .catch((error) => {
       console.error('Email sign-in error:', error);
@@ -127,6 +139,12 @@ function signUpWithEmail() {
       await createOrUpdateUser(user, name);
       showNotification('Account created successfully!', 'success');
       closeAuthModal();
+      
+      // Auto-start training after successful registration
+      setTimeout(() => {
+        console.log('🎯 Auto-starting training after sign-up');
+        startTraining();
+      }, 1500);
     })
     .catch((error) => {
       console.error('Email sign-up error:', error);
@@ -582,7 +600,10 @@ function updateSchoolsList(schools) {
 
 // Training Navigation Functions
 function startTraining() {
+  console.log('🚀 Starting training...', { currentUser });
+  
   if (!currentUser) {
+    console.log('❌ No user logged in, opening auth modal');
     openAuthModal();
     return;
   }
@@ -590,21 +611,40 @@ function startTraining() {
   const landing = document.getElementById('landing');
   const navigation = document.getElementById('navigation');
   
-  if (landing) landing.style.display = 'none';
-  if (navigation) navigation.style.display = 'block';
+  console.log('📍 Found elements:', { landing: !!landing, navigation: !!navigation });
   
+  if (landing) {
+    landing.style.display = 'none';
+    console.log('✅ Hidden landing page');
+  }
+  
+  if (navigation) {
+    navigation.style.display = 'block';
+    navigation.classList.add('visible');
+    console.log('✅ Showed navigation');
+  }
+  
+  // Show the first training section
   showSection('brain-needs');
+  console.log('✅ Showed brain-needs section');
   
   // Track training start
   analytics.logEvent('training_start', {
     user_id: currentUser.uid,
     school: currentSchool || 'direct'
   });
+  
+  // Scroll to top to ensure user sees the content
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 function showSection(sectionId) {
+  console.log(`📖 Showing section: ${sectionId}`);
+  
   // Hide all sections
   const sections = document.querySelectorAll('.training-section');
+  console.log(`Found ${sections.length} training sections`);
+  
   sections.forEach(section => {
     section.classList.remove('active');
   });
@@ -613,6 +653,9 @@ function showSection(sectionId) {
   const targetSection = document.getElementById(sectionId);
   if (targetSection) {
     targetSection.classList.add('active');
+    console.log(`✅ Activated section: ${sectionId}`);
+  } else {
+    console.error(`❌ Section not found: ${sectionId}`);
   }
   
   // Update navigation
@@ -624,6 +667,7 @@ function showSection(sectionId) {
   const activeNavItem = document.querySelector(`[data-section="${sectionId}"]`);
   if (activeNavItem) {
     activeNavItem.classList.add('active');
+    console.log(`✅ Updated navigation for: ${sectionId}`);
   }
   
   // Track section view
@@ -1050,6 +1094,58 @@ function initializeTooltips() {
   // Add any tooltip initialization here
 }
 
+// Debug function to check UI state
+function debugUIState() {
+  const landing = document.getElementById('landing');
+  const navigation = document.getElementById('navigation');
+  const sections = document.querySelectorAll('.training-section');
+  const activeSections = document.querySelectorAll('.training-section.active');
+  
+  console.log('🔍 UI State Debug:');
+  console.log('- Current User:', currentUser?.email || 'Not logged in');
+  console.log('- Landing display:', landing?.style.display || 'default');
+  console.log('- Navigation display:', navigation?.style.display || 'default');
+  console.log('- Navigation has visible class:', navigation?.classList.contains('visible'));
+  console.log('- Total training sections:', sections.length);
+  console.log('- Active training sections:', activeSections.length);
+  console.log('- Active section IDs:', Array.from(activeSections).map(s => s.id));
+  
+  // Check if elements are actually visible
+  if (navigation) {
+    const rect = navigation.getBoundingClientRect();
+    console.log('- Navigation dimensions:', { width: rect.width, height: rect.height });
+    console.log('- Navigation computed style:', window.getComputedStyle(navigation).display);
+  }
+  
+  activeSections.forEach(section => {
+    const rect = section.getBoundingClientRect();
+    console.log(`- Section ${section.id} dimensions:`, { width: rect.width, height: rect.height });
+  });
+}
+
+// Function to force show training interface
+function forceShowTraining() {
+  console.log('💪 Force showing training interface...');
+  
+  const landing = document.getElementById('landing');
+  const navigation = document.getElementById('navigation');
+  
+  if (landing) {
+    landing.style.display = 'none';
+    landing.style.visibility = 'hidden';
+  }
+  
+  if (navigation) {
+    navigation.style.display = 'block';
+    navigation.style.visibility = 'visible';
+    navigation.classList.add('visible');
+    navigation.style.opacity = '1';
+  }
+  
+  showSection('brain-needs');
+  debugUIState();
+}
+
 // Missing storyboard and interaction functions
 function showResponse(story, type) {
   // Hide all response panels for this story
@@ -1361,6 +1457,8 @@ window.runFeatureTests = runFeatureTests;
 window.testGoogleAuth = testGoogleAuth;
 window.testAllAuthMethods = testAllAuthMethods;
 window.testSchoolURLHandling = testSchoolURLHandling;
+window.debugUIState = debugUIState;
+window.forceShowTraining = forceShowTraining;
 
 // Immediately attach all functions to window object for HTML onclick handlers
 window.openAdminLogin = openAdminLogin;
