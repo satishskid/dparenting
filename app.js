@@ -63,7 +63,17 @@ function signInWithGoogle() {
     })
     .catch((error) => {
       console.error('Google sign-in error:', error);
-      showNotification('Failed to sign in with Google. Please try again.', 'error');
+      
+      // Handle specific Firebase errors
+      if (error.code === 'auth/unauthorized-domain') {
+        showNotification('Google sign-in is temporarily unavailable. Please use email sign-in instead.', 'warning');
+      } else if (error.code === 'auth/popup-blocked') {
+        showNotification('Popup was blocked. Please allow popups and try again.', 'warning');
+      } else if (error.code === 'auth/popup-closed-by-user') {
+        showNotification('Sign-in was cancelled.', 'info');
+      } else {
+        showNotification('Failed to sign in with Google. Please try email sign-in instead.', 'error');
+      }
     });
 }
 

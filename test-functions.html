@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Function Test</title>
+</head>
+<body>
+    <h1>Function Test Page</h1>
+    <p>This is a quick test to verify all functions are accessible:</p>
+    
+    <button onclick="openAuthModal()">Test openAuthModal</button>
+    <button onclick="startTraining()">Test startTraining</button>
+    <button onclick="showSection('brain-needs')">Test showSection</button>
+    
+    <script>
+        // Test if functions are available in global scope
+        console.log('openAuthModal available:', typeof openAuthModal !== 'undefined');
+        console.log('startTraining available:', typeof startTraining !== 'undefined');
+        console.log('showSection available:', typeof showSection !== 'undefined');
+    </script>
+</body>
+</html>
