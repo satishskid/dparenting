@@ -1520,5 +1520,17 @@ document.addEventListener('DOMContentLoaded', () => {
   initializeSkidsApp();
   addAuthButton();
   initializeBackToTop();
+  
+  // Set up event listeners as backup to onclick
+  const mainAuthBtn = document.getElementById('mainAuthBtn');
+  if (mainAuthBtn) {
+    mainAuthBtn.addEventListener('click', function(e) {
+      console.log('Event listener fired for auth button');
+      e.preventDefault();
+      openAuthModal();
+    });
+    console.log('Auth button event listener attached');
+  }
+  
   console.log('App initialization complete');
 });

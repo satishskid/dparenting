@@ -27,7 +27,7 @@
 <body>
     <!-- Auth Button -->
     <div class="auth-container" id="authButton">
-        <button class="btn btn--primary" onclick="openAuthModal()">
+        <button class="btn btn--primary" id="mainAuthBtn" onclick="openAuthModal()">
             Sign In / Sign Up
         </button>
     </div>
@@ -909,6 +909,12 @@
     <!-- Debug Script -->
     <script>
         console.log('Inline script loading...');
+        
+        // Global error handler
+        window.addEventListener('error', function(e) {
+            console.error('Global error caught:', e.error, e.filename, e.lineno);
+            document.body.innerHTML += '<div style="position:fixed;top:0;left:0;background:red;color:white;padding:10px;z-index:9999;">Error: ' + e.message + ' at ' + e.filename + ':' + e.lineno + '</div>';
+        });
         
         // Fallback function in case app.js fails
         function openAuthModalFallback() {
