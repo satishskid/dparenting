@@ -42,11 +42,11 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
-const auth = getAuth(app);
-const db = getFirestore(app);
-const storage = getStorage(app);
+const firebaseApp = initializeApp(firebaseConfig);
+const analytics = getAnalytics(firebaseApp);
+const auth = getAuth(firebaseApp);
+const db = getFirestore(firebaseApp);
+const storage = getStorage(firebaseApp);
 const googleProvider = new GoogleAuthProvider();
 
 // Global state
@@ -1193,14 +1193,7 @@ async function loadAnalyticsData() {
   }
 }
 
-// Initialize when DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
-  initializeSkidsApp();
-  addAuthButton();
-  initializeBackToTop();
-});
-
-// Legacy function support (for existing HTML onclick handlers)
+// Immediately attach all functions to window object for HTML onclick handlers
 window.openAdminLogin = openAdminLogin;
 window.closeAdminLogin = closeAdminLogin;
 window.loginAdmin = loginAdmin;
@@ -1229,3 +1222,10 @@ window.resetPartnerBranding = resetPartnerBranding;
 window.saveSettings = saveSettings;
 window.exportData = exportData;
 window.clearAnalytics = clearAnalytics;
+
+// Initialize when DOM is loaded
+document.addEventListener('DOMContentLoaded', () => {
+  initializeSkidsApp();
+  addAuthButton();
+  initializeBackToTop();
+});
