@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SKIDS Interactive Training Module</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <!-- Auth Button -->
+    <div class="auth-container" id="authButton">
+        <button class="btn btn--primary" onclick="openAuthModal()">
+            Sign In / Sign Up
+        </button>
+    </div>
+
+    <!-- Admin Access Button -->
+    <button class="admin-access-btn" onclick="openAdminLogin()" title="Admin Access" style="display: none;">
+        <span class="admin-icon">⚙️</span>
+    </button>
+
+    <!-- Authentication Modal -->
+    <div class="modal hidden" id="authModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Access SKIDS Training</h3>
+                <button class="modal-close" onclick="closeAuthModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="auth-tabs">
+                    <button class="auth-tab active" id="signInTab" onclick="toggleAuthMode()">Sign In</button>
+                    <button class="auth-tab" id="signUpTab" onclick="toggleAuthMode()">Sign Up</button>
+                </div>
+                
+                <!-- Sign In Form -->
+                <div id="signInForm" class="auth-form">
+                    <div class="form-group">
+                        <label class="form-label" for="emailInput">Email</label>
+                        <input type="email" id="emailInput" class="form-control" placeholder="Enter your email">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="passwordInput">Password</label>
+                        <input type="password" id="passwordInput" class="form-control" placeholder="Enter your password">
+                    </div>
+                    <button class="btn btn--primary btn--full-width" onclick="signInWithEmail()">
+                        Sign In
+                    </button>
+                </div>
+                
+                <!-- Sign Up Form -->
+                <div id="signUpForm" class="auth-form" style="display: none;">
+                    <div class="form-group">
+                        <label class="form-label" for="nameInputSignUp">Full Name</label>
+                        <input type="text" id="nameInputSignUp" class="form-control" placeholder="Enter your full name">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="emailInputSignUp">Email</label>
+                        <input type="email" id="emailInputSignUp" class="form-control" placeholder="Enter your email">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="passwordInputSignUp">Password</label>
+                        <input type="password" id="passwordInputSignUp" class="form-control" placeholder="Create a password (min 6 characters)">
+                    </div>
+                    <button class="btn btn--primary btn--full-width" onclick="signUpWithEmail()">
+                        Create Account
+                    </button>
+                </div>
+                
+                <div class="auth-divider">
+                    <span>or</span>
+                </div>
+                
+                <button class="btn btn--outline btn--full-width google-btn" onclick="signInWithGoogle()">
+                    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M17.64 9.20455C17.64 8.56682 17.5827 7.95227 17.4764 7.36364H9V10.8409H13.8436C13.635 11.795 13.0009 12.5659 12.0477 13.0568V15.1295H14.9564C16.6582 13.5682 17.64 11.5409 17.64 9.20455Z" fill="#4285F4"/>
+                        <path d="M9 17C11.43 17 13.4673 16.1941 14.9564 15.1295L12.0477 13.0568C11.2418 13.5341 10.2109 13.8182 9 13.8182C6.65909 13.8182 4.67273 12.2477 3.96409 10.1409H0.957273V12.2955C2.43818 15.2364 5.48182 17 9 17Z" fill="#34A853"/>
+                        <path d="M3.96409 10.1409C3.78409 9.66364 3.68182 9.14318 3.68182 8.59091C3.68182 8.03864 3.78409 7.51818 3.96409 7.04091V4.88636H0.957273C0.347727 6.09545 0 7.50909 0 9C0 10.4909 0.347727 11.9045 0.957273 13.1136L3.96409 10.1409Z" fill="#FBBC05"/>
+                        <path d="M9 3.40909C10.3491 3.40909 11.5336 3.86364 12.4636 4.75909L15.0727 2.15C13.4636 0.659091 11.4264 -0.204545 9 -0.204545C5.48182 -0.204545 2.43818 1.55909 0.957273 4.5L3.96409 7.04091C4.67273 4.93409 6.65909 3.40909 9 3.40909Z" fill="#EA4335"/>
+                    </svg>
+                    Sign in with Google
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Login Modal -->
+    <div class="modal hidden" id="adminLoginModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Admin Access</h3>
+                <button class="modal-close" onclick="closeAdminLogin()">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label" for="adminPassword">Admin Password</label>
+                    <input type="password" id="adminPassword" class="form-control" placeholder="Enter admin password">
+                </div>
+                <div class="error-message hidden" id="loginError">Invalid password. Please try again.</div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn--secondary" onclick="closeAdminLogin()">Cancel</button>
+                <button class="btn btn--primary" onclick="loginAdmin()">Login</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Panel Modal -->
+    <div class="modal hidden" id="adminPanelModal">
+        <div class="modal-content admin-panel">
+            <div class="modal-header">
+                <h3>SKIDS Admin Panel</h3>
+                <button class="modal-close" onclick="closeAdminPanel()">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="admin-tabs">
+                    <button class="admin-tab-btn active" onclick="showAdminTab('analytics')">📊 Analytics</button>
+                    <button class="admin-tab-btn" onclick="showAdminTab('branding')">🎨 Partner Branding</button>
+                    <button class="admin-tab-btn" onclick="showAdminTab('settings')">⚙️ Settings</button>
+                </div>
+
+                <!-- Analytics Tab -->
+                <div class="admin-tab-content active" id="analytics-tab">
+                    <h4>Usage Analytics Dashboard</h4>
+                    <div class="analytics-grid">
+                        <div class="analytics-card">
+                            <h5>Total Users</h5>
+                            <div class="analytics-number" id="totalUsers">1,247</div>
+                            <div class="analytics-subtitle">This month</div>
+                        </div>
+                        <div class="analytics-card">
+                            <h5>Completion Rate</h5>
+                            <div class="analytics-number" id="completionRate">78%</div>
+                            <div class="analytics-subtitle">Average completion</div>
+                        </div>
+                        <div class="analytics-card">
+                            <h5>Avg. Time Spent</h5>
+                            <div class="analytics-number" id="avgTime">24 min</div>
+                            <div class="analytics-subtitle">Per session</div>
+                        </div>
+                    </div>
+                    
+                    <div class="chart-container" style="position: relative; height: 400px;">
+                        <canvas id="usageChart"></canvas>
+                    </div>
+
+                    <div class="popular-sections">
+                        <h5>Most Popular Sections</h5>
+                        <div class="section-stats" id="sectionStats">
+                            <!-- Will be populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Partner Branding Tab -->
+                <div class="admin-tab-content" id="branding-tab">
+                    <h4>Partner Organization Customization</h4>
+                    <div class="branding-form">
+                        <div class="form-group">
+                            <label class="form-label" for="partnerName">Partner Organization Name</label>
+                            <input type="text" id="partnerName" class="form-control" placeholder="Enter partner name">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="partnerEmail">Contact Email</label>
+                            <input type="email" id="partnerEmail" class="form-control" placeholder="contact@partner.edu">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="partnerWebsite">Website</label>
+                            <input type="url" id="partnerWebsite" class="form-control" placeholder="www.partner.edu">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="partnerLogo">Partner Logo</label>
+                            <input type="file" id="partnerLogo" class="form-control" accept="image/*" onchange="previewLogo(this)">
+                            <div class="logo-preview" id="logoPreview">
+                                <img id="logoPreviewImg" src="" alt="Logo Preview" class="hidden">
+                                <div class="logo-placeholder" id="logoPlaceholder">Upload partner logo</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="preview-section">
+                        <h5>Preview</h5>
+                        <div class="partner-preview" id="partnerPreview">
+                            <div class="preview-header">
+                                <div class="preview-logo" id="previewLogoContainer">
+                                    <div class="preview-logo-placeholder">Partner Logo</div>
+                                </div>
+                                <div class="preview-text">
+                                    <h6 id="previewPartnerName">Partner Organization</h6>
+                                    <p id="previewPartnerContact">contact@partner.edu</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="branding-actions">
+                        <button class="btn btn--primary" onclick="savePartnerBranding()">Save Changes</button>
+                        <button class="btn btn--secondary" onclick="resetPartnerBranding()">Reset to Default</button>
+                    </div>
+                </div>
+
+                <!-- Settings Tab -->
+                <div class="admin-tab-content" id="settings-tab">
+                    <h4>Training Module Settings</h4>
+                    <div class="settings-form">
+                        <div class="form-group">
+                            <label class="form-label">
+                                <input type="checkbox" id="enableAnalytics" checked> Enable Usage Analytics
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">
+                                <input type="checkbox" id="showProgress" checked> Show Progress Tracking
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">
+                                <input type="checkbox" id="enableCertificates" checked> Enable Completion Certificates
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="adminPassword">Change Admin Password</label>
+                            <input type="password" id="newAdminPassword" class="form-control" placeholder="Enter new password">
+                        </div>
+                    </div>
+                    <div class="settings-actions">
+                        <button class="btn btn--primary" onclick="saveSettings()">Save Settings</button>
+                        <button class="btn btn--outline" onclick="exportData()">Export Analytics Data</button>
+                        <button class="btn btn--outline" onclick="clearAnalytics()">Clear Analytics</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Landing Page -->
+    <header class="hero-section" id="landing">
+        <div class="hero-content">
+            <div class="skids-logo">
+                <h1 class="skids-brand">
+                    <span class="letter-s1">S</span><span class="letter-k">K</span><span class="letter-i">I</span><span class="letter-d">D</span><span class="letter-s2">S</span>
+                </h1>
+                <p class="hero-subtitle">Interactive Training Module</p>
+                <div class="partner-branding" id="partnerBrandingDisplay" style="display: none;">
+                    <div class="partner-info">
+                        <div class="partner-logo-display" id="partnerLogoDisplay"></div>
+                        <div class="partner-details">
+                            <p>In partnership with <span id="displayPartnerName"></span></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="philosophy-banner">
+                <p class="philosophy-text">Every child is <strong>Smart, Kind, Incredible, Dynamic, and Special</strong> - we just need awareness and understanding to help them shine</p>
+            </div>
+            <div class="hero-description">
+                <p>Transform challenging moments into connection opportunities with practical, brain-based parenting strategies.</p>
+                <button class="start-btn" onclick="startTraining()">
+                    <span class="play-icon">▶</span>
+                    Start Training
+                </button>
+            </div>
+        </div>
+        <div class="progress-container">
+            <div class="progress-label">Training Progress</div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="mainProgress"></div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Navigation -->
+    <nav class="training-nav" id="navigation">
+        <div class="nav-container">
+            <button class="nav-item active" onclick="showSection('brain-needs')" data-section="brain-needs">
+                <span class="nav-icon">🧠</span>
+                <span class="nav-title">Brain Needs</span>
+                <span class="nav-desc">Understanding Development</span>
+            </button>
+            <button class="nav-item" onclick="showSection('storyboards')" data-section="storyboards">
+                <span class="nav-icon">🎭</span>
+                <span class="nav-title">Family Stories</span>
+                <span class="nav-desc">Real Scenarios</span>
+            </button>
+            <button class="nav-item" onclick="showSection('abcde-method')" data-section="abcde-method">
+                <span class="nav-icon">🔧</span>
+                <span class="nav-title">ABCDE Method</span>
+                <span class="nav-desc">Problem Solving</span>
+            </button>
+            <button class="nav-item" onclick="showSection('toolkit')" data-section="toolkit">
+                <span class="nav-icon">🎯</span>
+                <span class="nav-title">Practical Toolkit</span>
+                <span class="nav-desc">Daily Applications</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Brain Needs Section -->
+    <section class="training-section active" id="brain-needs">
+        <div class="section-header">
+            <h2>Understanding Teen Brain Needs</h2>
+            <p class="section-description">Every challenging behavior is a teen trying to meet one of these four core developmental needs.</p>
+        </div>
+
+        <div class="brain-needs-grid">
+            <div class="need-card exploration" onclick="expandNeed('exploration')">
+                <div class="need-icon">🚀</div>
+                <h3>Exploration & Risk-Taking</h3>
+                <p>The brain is wired for novelty and new experiences</p>
+                <div class="need-details" id="exploration-details">
+                    <div class="examples-list">
+                        <h4>Real Examples:</h4>
+                        <ul>
+                            <li>Starting a graffiti art project on legal walls</li>
+                            <li>Learning electric guitar and joining a band</li>
+                            <li>Trying skateboarding or rock climbing</li>
+                            <li>Taking challenging advanced courses</li>
+                            <li>Starting a school newspaper or blog</li>
+                            <li>Organizing a new school club</li>
+                        </ul>
+                    </div>
+                    <div class="insight-box">
+                        <strong>SKIDS Insight:</strong> When teens seem "reckless," they're actually developing independence and discovering their capabilities. Our role is to provide safe channels for this essential drive.
+                    </div>
+                </div>
+            </div>
+
+            <div class="need-card meaning" onclick="expandNeed('meaning')">
+                <div class="need-icon">❤️</div>
+                <h3>Meaning & Purpose</h3>
+                <p>Finding ways to contribute and make a difference</p>
+                <div class="need-details" id="meaning-details">
+                    <div class="examples-list">
+                        <h4>Real Examples:</h4>
+                        <ul>
+                            <li>Volunteering at animal shelters or food banks</li>
+                            <li>Starting environmental action projects</li>
+                            <li>Tutoring younger students</li>
+                            <li>Writing for the school magazine</li>
+                            <li>Organizing community awareness campaigns</li>
+                            <li>Mentoring peers through difficult times</li>
+                        </ul>
+                    </div>
+                    <div class="insight-box">
+                        <strong>SKIDS Insight:</strong> Teens have an incredible capacity for empathy and social contribution. When we help them find meaningful ways to contribute, behavioral issues often resolve naturally.
+                    </div>
+                </div>
+            </div>
+
+            <div class="need-card identity" onclick="expandNeed('identity')">
+                <div class="need-icon">🎨</div>
+                <h3>Values & Identity</h3>
+                <p>Figuring out who they are and who they want to be</p>
+                <div class="need-details" id="identity-details">
+                    <div class="examples-list">
+                        <h4>Real Examples:</h4>
+                        <ul>
+                            <li>Exploring fashion and personal style</li>
+                            <li>Career exploration through internships</li>
+                            <li>Questioning and exploring spiritual beliefs</li>
+                            <li>Developing political awareness and opinions</li>
+                            <li>Celebrating cultural identity and heritage</li>
+                            <li>Experimenting with different friend groups</li>
+                        </ul>
+                    </div>
+                    <div class="insight-box">
+                        <strong>SKIDS Insight:</strong> Identity formation is the central task of adolescence. What looks like "phase" behavior is actually deep developmental work that deserves our respect and curiosity.
+                    </div>
+                </div>
+            </div>
+
+            <div class="need-card respect" onclick="expandNeed('respect')">
+                <div class="need-icon">🤝</div>
+                <h3>Respect & Social Status</h3>
+                <p>Being seen, valued, and accepted by peers and adults</p>
+                <div class="need-details" id="respect-details">
+                    <div class="examples-list">
+                        <h4>Real Examples:</h4>
+                        <ul>
+                            <li>Taking on leadership roles in school</li>
+                            <li>Building a positive social media presence</li>
+                            <li>Standing up for others as an ally</li>
+                            <li>Earning recognition for talents and achievements</li>
+                            <li>Building genuine friendships based on shared interests</li>
+                            <li>Contributing unique perspectives in group discussions</li>
+                        </ul>
+                    </div>
+                    <div class="insight-box">
+                        <strong>SKIDS Insight:</strong> The teenage brain is exquisitely tuned to social dynamics. When teens feel genuinely respected by the adults in their lives, they're more likely to make positive choices.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Storyboards Section -->
+    <section class="training-section" id="storyboards">
+        <div class="section-header">
+            <h2>Real Family Scenarios</h2>
+            <p class="section-description">See how SKIDS principles transform challenging moments into connection opportunities.</p>
+        </div>
+
+        <div class="storyboards-container">
+            <!-- Sarah's Purple Hair -->
+            <div class="storyboard-card">
+                <div class="story-header">
+                    <h3>Sarah's Purple Hair Story</h3>
+                    <p class="story-context">Sarah, 15, walks through the front door with vibrant purple hair. Her parents freeze in shock...</p>
+                </div>
+                
+                <div class="response-comparison">
+                    <div class="response-tabs">
+                        <button class="tab-btn active" onclick="showResponse('sarah', 'traditional')">Traditional Response</button>
+                        <button class="tab-btn" onclick="showResponse('sarah', 'skids')">SKIDS Approach</button>
+                    </div>
+                    
+                    <div class="response-panels">
+                        <div class="response-panel active" id="sarah-traditional">
+                            <div class="scene-description">
+                                <h4>The Scene:</h4>
+                                <p>Parent with shocked expression, hands raised, teen looking defensive and hurt</p>
+                            </div>
+                            <div class="thought-bubble traditional">
+                                <strong>Parent's Thoughts:</strong> "Purple hair? What were you thinking? She's going to get suspended! This is rebellion!"
+                            </div>
+                            <div class="dialogue-box">
+                                <p><strong>Parent:</strong> "Sarah! What have you done to your hair? You look ridiculous! Go wash it out right now!"</p>
+                                <p><strong>Sarah:</strong> <em>(defensively)</em> "You don't understand anything!" <em>(storms off)</em></p>
+                            </div>
+                            <div class="outcome negative">
+                                <strong>Result:</strong> Connection broken, teen feels rejected, power struggle initiated
+                            </div>
+                        </div>
+                        
+                        <div class="response-panel" id="sarah-skids">
+                            <div class="scene-description">
+                                <h4>The Scene:</h4>
+                                <p>Parent leaning in with genuine curiosity, teen smiling and explaining their artistic choice</p>
+                            </div>
+                            <div class="thought-bubble skids">
+                                <strong>Parent's Thoughts:</strong> "This is her exploring her identity. She wants to be seen and respected. Let me respond with warmth and curiosity."
+                            </div>
+                            <div class="dialogue-box">
+                                <p><strong>Parent:</strong> "Wow, that's a bold choice! Tell me about it - what inspired you to try purple?"</p>
+                                <p><strong>Sarah:</strong> "Really? You're not mad? I thought it would help me express who I really am. I love how creative it looks!"</p>
+                            </div>
+                            <div class="outcome positive">
+                                <strong>Result:</strong> Parents validate Sarah's creativity while discussing school policies together, maintaining connection and respect
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Leo's Homework Crisis -->
+            <div class="storyboard-card">
+                <div class="story-header">
+                    <h3>Leo's Homework Crisis</h3>
+                    <p class="story-context">Leo, 13, is gaming when his history project is due tomorrow. Parent discovers this at 9 PM...</p>
+                </div>
+                
+                <div class="response-comparison">
+                    <div class="response-tabs">
+                        <button class="tab-btn active" onclick="showResponse('leo', 'traditional')">Traditional Response</button>
+                        <button class="tab-btn" onclick="showResponse('leo', 'skids')">SKIDS Approach</button>
+                    </div>
+                    
+                    <div class="response-panels">
+                        <div class="response-panel active" id="leo-traditional">
+                            <div class="scene-description">
+                                <h4>The Scene:</h4>
+                                <p>Parent pointing angrily, child hunched defensively over gaming device</p>
+                            </div>
+                            <div class="thought-bubble traditional">
+                                <strong>Parent's Thoughts:</strong> "He's so irresponsible! I'm taking that game away for a month, no exceptions!"
+                            </div>
+                            <div class="dialogue-box">
+                                <p><strong>Parent:</strong> "Leo! Your project is due tomorrow! Games off NOW! You're grounded for a month!"</p>
+                                <p><strong>Leo:</strong> "But I can finish it! You never let me have fun! This is so unfair!"</p>
+                            </div>
+                            <div class="outcome negative">
+                                <strong>Result:</strong> Power struggle, no learning about time management, resentment builds
+                            </div>
+                        </div>
+                        
+                        <div class="response-panel" id="leo-skids">
+                            <div class="scene-description">
+                                <h4>The Scene:</h4>
+                                <p>Parent and child sitting together at table with books, laptop, and planning materials in collaborative discussion</p>
+                            </div>
+                            <div class="thought-bubble skids">
+                                <strong>Parent's Thoughts:</strong> "This is a problem that needs solving together. Let's use our ABCDE method to empower him with life skills."
+                            </div>
+                            <div class="dialogue-box">
+                                <p><strong>Parent:</strong> "I see you're gaming and your project is due tomorrow. Help me understand what's happening."</p>
+                                <p><strong>Leo:</strong> "I know I messed up. I feel overwhelmed and don't know where to start."</p>
+                            </div>
+                            <div class="outcome positive">
+                                <strong>Result:</strong> Leo and parent create a sustainable homework system together, teaching planning and time management skills
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Maya's Screen Time Meltdown -->
+            <div class="storyboard-card">
+                <div class="story-header">
+                    <h3>Maya's Screen Time Meltdown</h3>  
+                    <p class="story-context">Maya, 11, has an explosive reaction when the screen time timer goes off during her favorite show...</p>
+                </div>
+                
+                <div class="response-comparison">
+                    <div class="response-tabs">
+                        <button class="tab-btn active" onclick="showResponse('maya', 'traditional')">Traditional Response</button>
+                        <button class="tab-btn" onclick="showResponse('maya', 'skids')">SKIDS Approach</button>
+                    </div>
+                    
+                    <div class="response-panels">
+                        <div class="response-panel active" id="maya-traditional">
+                            <div class="scene-description">
+                                <h4>The Scene:</h4>
+                                <p>Child having intense tantrum on floor, parent looking overwhelmed and panicked</p>
+                            </div>
+                            <div class="thought-bubble traditional">
+                                <strong>Parent's Thoughts:</strong> "Oh no, she's addicted! I've created a monster. She's going to have a hard time in the real world."
+                            </div>
+                            <div class="dialogue-box">
+                                <p><strong>Parent:</strong> "That's it! No more screens for a week! This behavior is completely unacceptable!"</p>
+                                <p><strong>Maya:</strong> <em>(screaming, throwing things)</em> "I hate you! You don't understand anything!"</p>
+                            </div>
+                            <div class="outcome negative">
+                                <strong>Result:</strong> Escalated conflict, no learning about emotional regulation, fear-based relationship
+                            </div>
+                        </div>
+                        
+                        <div class="response-panel" id="maya-skids">
+                            <div class="scene-description">
+                                <h4>The Scene:</h4>
+                                <p>Parent kneeling calmly at child's eye level, offering comfort while child gradually self-regulates</p>
+                            </div>
+                            <div class="thought-bubble skids">
+                                <strong>Parent's Thoughts:</strong> "This is an opportunity for her to learn emotional regulation. I need to model calm presence and help her develop coping skills."
+                            </div>
+                            <div class="dialogue-box">
+                                <p><strong>Parent:</strong> "I can see you're really upset about stopping. Transitions are hard. Let's take some deep breaths together."</p>
+                                <p><strong>Maya:</strong> <em>(gradually calming)</em> "I just wanted to see what happened next. It's not fair."</p>
+                            </div>
+                            <div class="outcome positive">
+                                <strong>Result:</strong> Parent teaches transition strategies and emotional regulation skills, building Maya's resilience and coping abilities
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ben's Silent Dinner -->
+            <div class="storyboard-card">
+                <div class="story-header">
+                    <h3>Ben's Silent Dinner</h3>
+                    <p class="story-context">Ben, 16, scrolls through his phone silently during family dinner despite established boundaries...</p>
+                </div>
+                
+                <div class="response-comparison">
+                    <div class="response-tabs">
+                        <button class="tab-btn active" onclick="showResponse('ben', 'traditional')">Traditional Response</button>
+                        <button class="tab-btn" onclick="showResponse('ben', 'skids')">SKIDS Approach</button>
+                    </div>
+                    
+                    <div class="response-panels">
+                        <div class="response-panel active" id="ben-traditional">
+                            <div class="scene-description">
+                                <h4>The Scene:</h4>
+                                <p>Family at dinner table, teen absorbed in phone, parent gesturing in frustration</p>
+                            </div>
+                            <div class="thought-bubble traditional">
+                                <strong>Parent's Thoughts:</strong> "Put that phone away right now! It's ruining our family time!"
+                            </div>
+                            <div class="dialogue-box">
+                                <p><strong>Parent:</strong> <em>(grabbing phone)</em> "Give me that! We agreed no phones at dinner!"</p>
+                                <p><strong>Ben:</strong> "Hey! Give it back! You can't just take my stuff! That's not fair!"</p>
+                            </div>
+                            <div class="outcome negative">
+                                <strong>Result:</strong> Power struggle, damaged trust, no learning about boundaries or respect
+                            </div>
+                        </div>
+                        
+                        <div class="response-panel" id="ben-skids">
+                            <div class="scene-description">
+                                <h4>The Scene:</h4>
+                                <p>Same family at table but phone is away, everyone engaged in animated conversation about their day</p>
+                            </div>
+                            <div class="thought-bubble skids">
+                                <strong>Parent's Thoughts:</strong> "I'll calmly enforce our agreed boundary and show genuine interest in his life, balancing connection with structure."
+                            </div>
+                            <div class="dialogue-box">
+                                <p><strong>Parent:</strong> "Ben, I notice you have your phone out. Our family agreement is no phones during dinner."</p>
+                                <p><strong>Ben:</strong> "Sorry, I was just checking something important."</p>
+                                <p><strong>Parent:</strong> "I understand. After dinner, we can talk about what made it feel urgent, and maybe adjust our agreement if needed."</p>
+                            </div>
+                            <div class="outcome positive">
+                                <strong>Result:</strong> Pre-established family agreements prevent power struggles and create space for meaningful connection and dialogue
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ABCDE Method Section -->
+    <section class="training-section" id="abcde-method">
+        <div class="section-header">
+            <h2>The ABCDE Method</h2>
+            <p class="section-description">Transform problems into collaborative learning opportunities with this step-by-step approach.</p>
+        </div>
+
+        <div class="abcde-container">
+            <div class="method-overview">
+                <div class="method-steps">
+                    <div class="step-card" onclick="showABCDEStep('acknowledge')">
+                        <div class="step-letter">A</div>
+                        <h3>Acknowledge</h3>
+                        <p>Recognize the problem together without blame</p>
+                    </div>
+                    <div class="step-card" onclick="showABCDEStep('brainstorm')">
+                        <div class="step-letter">B</div>
+                        <h3>Brainstorm</h3>
+                        <p>Generate solutions together as a team</p>
+                    </div>
+                    <div class="step-card" onclick="showABCDEStep('choose')">
+                        <div class="step-letter">C</div>
+                        <h3>Choose</h3>
+                        <p>Select one solution to try together</p>
+                    </div>
+                    <div class="step-card" onclick="showABCDEStep('do')">
+                        <div class="step-letter">D</div>
+                        <h3>Do</h3>
+                        <p>Implement with family support</p>
+                    </div>
+                    <div class="step-card" onclick="showABCDEStep('evaluate')">
+                        <div class="step-letter">E</div>
+                        <h3>Evaluate</h3>
+                        <p>Reflect and adjust as needed</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="examples-showcase">
+                <h3>Real-World Examples</h3>
+                
+                <div class="example-card">
+                    <h4>Messy Room Crisis</h4>
+                    <div class="example-steps">
+                        <div class="example-step">
+                            <strong>A:</strong> "Your room is really messy and it's hard to find things"
+                        </div>
+                        <div class="example-step">
+                            <strong>B:</strong> "10-minute pickup timer? Music playlist? Reward system? Reorganize storage solutions?"
+                        </div>
+                        <div class="example-step">
+                            <strong>C:</strong> "Let's try the 10-minute timer method with music"
+                        </div>
+                        <div class="example-step">
+                            <strong>D:</strong> Set timer, play favorite songs, clean together
+                        </div>
+                        <div class="example-step">
+                            <strong>E:</strong> "How did that feel? What worked best? What would make it even better?"
+                        </div>
+                    </div>
+                </div>
+
+                <div class="example-card">
+                    <h4>Friend Drama</h4>
+                    <div class="example-steps">
+                        <div class="example-step">
+                            <strong>A:</strong> "You seem really upset about what happened with Sarah"
+                        </div>
+                        <div class="example-step">
+                            <strong>B:</strong> "Talk directly to her? Write a letter to organize thoughts? Ask a trusted adult for advice?"
+                        </div>
+                        <div class="example-step">
+                            <strong>C:</strong> "I want to talk to her tomorrow at lunch"
+                        </div>
+                        <div class="example-step">
+                            <strong>D:</strong> Have the honest conversation with Sarah
+                        </div>
+                        <div class="example-step">
+                            <strong>E:</strong> "What did you learn? How did it go? What would you do differently?"
+                        </div>
+                    </div>
+                </div>
+
+                <div class="example-card">
+                    <h4>Grade Concerns</h4>
+                    <div class="example-steps">
+                        <div class="example-step">
+                            <strong>A:</strong> "Your math grade has dropped and you seem frustrated"
+                        </div>
+                        <div class="example-step">
+                            <strong>B:</strong> "Join a study group? Get a tutor? Try different study methods? Talk to the teacher?"
+                        </div>
+                        <div class="example-step">
+                            <strong>C:</strong> "I'll try joining the study group first"
+                        </div>
+                        <div class="example-step">
+                            <strong>D:</strong> Attend study group sessions for two weeks
+                        </div>
+                        <div class="example-step">
+                            <strong>E:</strong> "Is this helping your understanding? What else might work?"
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Toolkit Section -->
+    <section class="training-section" id="toolkit">
+        <div class="section-header">
+            <h2>Your SKIDS Toolkit</h2>
+            <p class="section-description">Practical tools and worksheets for daily implementation of SKIDS principles.</p>
+        </div>
+
+        <div class="toolkit-grid">
+            <div class="tool-card">
+                <h3>🧠 Brain Need Identifier</h3>
+                <div class="tool-content">
+                    <p>When your teen does something unexpected, use this checklist:</p>
+                    <div class="checklist">
+                        <label><input type="checkbox"> Which core need might they be trying to meet?</label>
+                        <label><input type="checkbox"> How can I respond with curiosity instead of fear?</label>
+                        <label><input type="checkbox"> What's the underlying message they're communicating?</label>
+                        <label><input type="checkbox"> How can I maintain connection while addressing concerns?</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tool-card">
+                <h3>📝 ABCDE Worksheet</h3>
+                <div class="tool-content">
+                    <div class="worksheet-step">
+                        <h4>A - Acknowledge</h4>
+                        <textarea placeholder="Describe the situation without blame..."></textarea>
+                    </div>
+                    <div class="worksheet-step">
+                        <h4>B - Brainstorm</h4>
+                        <textarea placeholder="List all possible solutions..."></textarea>
+                    </div>
+                    <div class="worksheet-step">
+                        <h4>C - Choose</h4>
+                        <textarea placeholder="Which solution will you try first?"></textarea>
+                    </div>
+                    <div class="worksheet-step">
+                        <h4>D - Do</h4>
+                        <textarea placeholder="How will you support implementation?"></textarea>
+                    </div>
+                    <div class="worksheet-step">
+                        <h4>E - Evaluate</h4>
+                        <textarea placeholder="What did you learn? What would you change?"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tool-card">
+                <h3>🎯 Daily Connection Strategies</h3>
+                <div class="tool-content">
+                    <div class="strategy-category">
+                        <h4>Morning Connection</h4>
+                        <label><input type="checkbox"> Start with genuine interest in their day</label>
+                        <label><input type="checkbox"> Share something positive you noticed about them</label>
+                        <label><input type="checkbox"> Ask about their priorities for today</label>
+                    </div>
+                    <div class="strategy-category">
+                        <h4>Problem-Solving Mode</h4>
+                        <label><input type="checkbox"> Pause and breathe before reacting</label>
+                        <label><input type="checkbox"> Ask "What need are they trying to meet?"</label>
+                        <label><input type="checkbox"> Invite collaboration: "Let's figure this out together"</label>
+                    </div>
+                    <div class="strategy-category">
+                        <h4>Evening Reflection</h4>
+                        <label><input type="checkbox"> Acknowledge something they handled well today</label>
+                        <label><input type="checkbox"> Ask about highlights and challenges</label>
+                        <label><input type="checkbox"> End with affirmation of your love and belief in them</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tool-card">
+                <h3>💬 Conversation Starters</h3>
+                <div class="tool-content">
+                    <div class="conversation-category">
+                        <h4>Identity & Values</h4>
+                        <ul>
+                            <li>"What's something you believe strongly about?"</li>
+                            <li>"If you could change one thing about the world, what would it be?"</li>
+                            <li>"What makes you feel most like yourself?"</li>
+                        </ul>
+                    </div>
+                    <div class="conversation-category">
+                        <h4>Future & Dreams</h4>
+                        <ul>
+                            <li>"What are you excited to try or learn?"</li>
+                            <li>"If you could apprentice with anyone, who would it be?"</li>
+                            <li>"What kind of impact do you want to have?"</li>
+                        </ul>
+                    </div>
+                    <div class="conversation-category">
+                        <h4>Current Life</h4>
+                        <ul>
+                            <li>"What's been the best part of your week so far?"</li>
+                            <li>"Is there anything you're worried about that I could help with?"</li>
+                            <li>"What's something new you've discovered about yourself lately?"</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contact Information Card -->
+            <div class="tool-card contact-card">
+                <h3>📞 Connect with SKIDS</h3>
+                <div class="tool-content">
+                    <div class="contact-info">
+                        <div class="contact-item">
+                            <strong>Address:</strong>
+                            <p>Number- 518, VV Arcade, 1st Main Road, Block B, AECS Layout, Kundalahalli</p>
+                            <p>Landmark: Above Kanti Sweets, Marathahalli, Bangalore</p>
+                        </div>
+                        <div class="contact-item">
+                            <strong>Email:</strong>
+                            <p><a href="mailto:hello@skids.health" target="_blank">hello@skids.health</a></p>
+                        </div>
+                        <div class="contact-item">
+                            <strong>Training Support:</strong>
+                            <p>Need help implementing these strategies? Our team is here to support you on your parenting journey.</p>
+                        </div>
+                    </div>
+                    <button class="btn btn--primary btn--full-width" onclick="generateCertificate()">
+                        🏆 Generate Completion Certificate
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Certificate Modal -->
+    <div class="modal hidden" id="certificateModal">
+        <div class="modal-content certificate-modal">
+            <div class="modal-header">
+                <h3>Completion Certificate</h3>
+                <button class="modal-close" onclick="closeCertificateModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="certificate" id="certificate">
+                    <div class="certificate-header">
+                        <div class="certificate-logo">
+                            <div class="skids-brand-small">
+                                <span class="letter-s1">S</span><span class="letter-k">K</span><span class="letter-i">I</span><span class="letter-d">D</span><span class="letter-s2">S</span>
+                            </div>
+                        </div>
+                        <h2>Certificate of Completion</h2>
+                    </div>
+                    <div class="certificate-body">
+                        <p class="certificate-text">This certifies that</p>
+                        <div class="certificate-name" id="certificateName">Training Participant</div>
+                        <p class="certificate-text">has successfully completed the</p>
+                        <h3 class="certificate-course">SKIDS Interactive Training Module</h3>
+                        <p class="certificate-description">Understanding Teen Brain Needs, Family Communication, and the ABCDE Problem-Solving Method</p>
+                        <div class="certificate-footer">
+                            <div class="certificate-date">Date: <span id="certificateDate"></span></div>
+                            <div class="certificate-signature">
+                                <div class="signature-line"></div>
+                                <p>SKIDS Training Team</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn--secondary" onclick="closeCertificateModal()">Close</button>
+                <button class="btn btn--primary" onclick="downloadCertificate()">Download Certificate</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Back to Top Button -->
+    <button class="back-to-top" id="backToTop" onclick="scrollToTop()">↑</button>
+
+    <script type="module" src="app.js"></script>
+</body>
+</html>
