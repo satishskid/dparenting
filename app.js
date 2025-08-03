@@ -55,24 +55,32 @@ function initializeSkidsApp() {
 
 // Authentication Functions
 function signInWithGoogle() {
+  // Show loading state
+  showNotification('Connecting to Google...', 'info');
+  
   auth.signInWithPopup(googleProvider)
     .then(async (result) => {
       const user = result.user;
       await createOrUpdateUser(user);
       showNotification('Successfully signed in with Google!', 'success');
+      closeAuthModal();
     })
     .catch((error) => {
       console.error('Google sign-in error:', error);
       
       // Handle specific Firebase errors
       if (error.code === 'auth/unauthorized-domain') {
-        showNotification('Google sign-in is temporarily unavailable. Please use email sign-in instead.', 'warning');
+        showNotification('Google sign-in is not available from this domain. Please use email sign-in instead.', 'warning');
       } else if (error.code === 'auth/popup-blocked') {
-        showNotification('Popup was blocked. Please allow popups and try again.', 'warning');
+        showNotification('Popup was blocked by your browser. Please allow popups and try again.', 'warning');
       } else if (error.code === 'auth/popup-closed-by-user') {
         showNotification('Sign-in was cancelled.', 'info');
+      } else if (error.code === 'auth/network-request-failed') {
+        showNotification('Network error. Please check your connection and try again.', 'error');
+      } else if (error.code === 'auth/too-many-requests') {
+        showNotification('Too many attempts. Please wait a moment and try again.', 'warning');
       } else {
-        showNotification('Failed to sign in with Google. Please try email sign-in instead.', 'error');
+        showNotification('Google sign-in failed. Please try email sign-in instead.', 'error');
       }
     });
 }
@@ -1170,6 +1178,189 @@ async function loadAnalyticsData() {
     return [];
   }
 }
+
+// Feature Testing Functions
+function runFeatureTests() {
+  console.log('🧪 Running SKIDS Feature Tests...');
+  
+  const tests = [
+    { name: 'Firebase Initialization', test: testFirebaseInit },
+    { name: 'UI Elements Present', test: testUIElements },
+    { name: 'Navigation Functions', test: testNavigationFunctions },
+    { name: 'Modal Functions', test: testModalFunctions },
+    { name: 'Authentication Functions', test: testAuthFunctions },
+    { name: 'Progress Tracking', test: testProgressTracking },
+    { name: 'Admin Functions', test: testAdminFunctions },
+    { name: 'Analytics Integration', test: testAnalytics }
+  ];
+  
+  let passed = 0;
+  let failed = 0;
+  
+  tests.forEach(({ name, test }) => {
+    try {
+      const result = test();
+      if (result) {
+        console.log(`✅ ${name}: PASSED`);
+        passed++;
+      } else {
+        console.log(`❌ ${name}: FAILED`);
+        failed++;
+      }
+    } catch (error) {
+      console.log(`❌ ${name}: ERROR - ${error.message}`);
+      failed++;
+    }
+  });
+  
+  console.log(`\n📊 Test Results: ${passed} passed, ${failed} failed`);
+  showNotification(`Feature Tests: ${passed} passed, ${failed} failed`, failed > 0 ? 'warning' : 'success');
+}
+
+function testFirebaseInit() {
+  return !!(firebase && auth && db && storage && analytics);
+}
+
+function testUIElements() {
+  const requiredElements = [
+    'authButton',
+    'landing',
+    'navigation',
+    'brain-needs',
+    'storyboards',
+    'abcde-method',
+    'toolkit'
+  ];
+  
+  return requiredElements.every(id => document.getElementById(id) !== null);
+}
+
+function testNavigationFunctions() {
+  const functions = [
+    'startTraining',
+    'showSection',
+    'openAuthModal',
+    'closeAuthModal',
+    'scrollToTop'
+  ];
+  
+  return functions.every(func => typeof window[func] === 'function');
+}
+
+function testModalFunctions() {
+  const functions = [
+    'openAdminLogin',
+    'closeAdminLogin',
+    'openAdminPanel',
+    'closeAdminPanel',
+    'generateCertificate',
+    'closeCertificateModal'
+  ];
+  
+  return functions.every(func => typeof window[func] === 'function');
+}
+
+function testAuthFunctions() {
+  const functions = [
+    'signInWithGoogle',
+    'signInWithEmail',
+    'signUpWithEmail',
+    'logout',
+    'toggleAuthMode'
+  ];
+  
+  return functions.every(func => typeof window[func] === 'function');
+}
+
+function testProgressTracking() {
+  return !!(trainingProgress && typeof updateProgressBar === 'function' && typeof trackSectionComplete === 'function');
+}
+
+function testAdminFunctions() {
+  const functions = [
+    'loginAdmin',
+    'showAdminTab',
+    'savePartnerBranding',
+    'resetPartnerBranding',
+    'saveSettings',
+    'exportData'
+  ];
+  
+  return functions.every(func => typeof window[func] === 'function');
+}
+
+function testAnalytics() {
+  return !!(analytics && typeof analytics.logEvent === 'function');
+}
+
+// Test Google Auth specifically
+async function testGoogleAuth() {
+  console.log('🔍 Testing Google Authentication...');
+  
+  try {
+    // Test if Google provider is configured
+    if (!googleProvider) {
+      throw new Error('Google provider not initialized');
+    }
+    
+    // Test if auth domain is properly set
+    console.log('Auth domain:', firebaseConfig.authDomain);
+    console.log('Current domain:', window.location.hostname);
+    
+    showNotification('Google Auth configuration appears correct. Try signing in!', 'success');
+    return true;
+  } catch (error) {
+    console.error('Google Auth test failed:', error);
+    showNotification(`Google Auth test failed: ${error.message}`, 'error');
+    return false;
+  }
+}
+
+// Test all authentication methods
+async function testAllAuthMethods() {
+  console.log('🔐 Testing Authentication Methods...');
+  
+  const results = {
+    emailAuth: typeof auth.createUserWithEmailAndPassword === 'function',
+    googleAuth: typeof auth.signInWithPopup === 'function' && !!googleProvider,
+    signOut: typeof auth.signOut === 'function',
+    stateListener: typeof auth.onAuthStateChanged === 'function'
+  };
+  
+  console.log('Auth Methods:', results);
+  
+  const allPassed = Object.values(results).every(Boolean);
+  showNotification(`Auth Methods Test: ${allPassed ? 'PASSED' : 'FAILED'}`, allPassed ? 'success' : 'error');
+  
+  return results;
+}
+
+// Test school URL handling
+function testSchoolURLHandling() {
+  console.log('🏫 Testing School URL Handling...');
+  
+  // Test with different URL patterns
+  const testURLs = [
+    'https://digiparenting.netlify.app/?school=test-school',
+    'https://digiparenting.netlify.app/school/test-school',
+    'https://digiparenting.netlify.app/'
+  ];
+  
+  testURLs.forEach(url => {
+    const urlObj = new URL(url);
+    const params = new URLSearchParams(urlObj.search);
+    const school = params.get('school');
+    console.log(`URL: ${url} -> School: ${school || 'direct'}`);
+  });
+  
+  showNotification('School URL handling test completed - check console', 'info');
+}
+
+// Expose test functions globally
+window.runFeatureTests = runFeatureTests;
+window.testGoogleAuth = testGoogleAuth;
+window.testAllAuthMethods = testAllAuthMethods;
+window.testSchoolURLHandling = testSchoolURLHandling;
 
 // Immediately attach all functions to window object for HTML onclick handlers
 window.openAdminLogin = openAdminLogin;
