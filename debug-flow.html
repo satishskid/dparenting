@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SKIDS Debug - Step by Step Flow</title>
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- Firebase CDN Scripts -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-analytics-compat.js"></script>
+    
+    <style>
+        #debugPanel {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            width: 300px;
+            background: white;
+            border: 2px solid #007bff;
+            border-radius: 8px;
+            padding: 15px;
+            z-index: 10000;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .debug-step { margin: 5px 0; padding: 5px; border-radius: 3px; }
+        .debug-success { background: #d4edda; color: #155724; }
+        .debug-error { background: #f8d7da; color: #721c24; }
+        .debug-info { background: #d1ecf1; color: #0c5460; }
+        .debug-warning { background: #fff3cd; color: #856404; }
+        
+        /* Force show training sections for debugging */
+        .force-show-training .training-nav {
+            display: block !important;
+            opacity: 1 !important;
+        }
+        .force-show-training #landing {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <!-- Debug Panel -->
+    <div id="debugPanel">
+        <h4>🔍 SKIDS Debug Panel</h4>
+        <button onclick="testFlow()" style="margin: 5px; padding: 5px 10px;">Test Auth Flow</button>
+        <button onclick="forceShowTraining()" style="margin: 5px; padding: 5px 10px;">Force Show Training</button>
+        <button onclick="resetView()" style="margin: 5px; padding: 5px 10px;">Reset View</button>
+        <div id="debugLog"></div>
+    </div>
+
+    <!-- Auth Button -->
+    <div class="auth-container" id="authButton">
+        <button class="btn btn--primary" id="mainAuthBtn" onclick="openAuthModal()">
+            Sign In / Sign Up
+        </button>
+    </div>
+
+    <!-- Landing Page -->
+    <header class="hero-section" id="landing">
+        <div class="hero-content">
+            <div class="skids-logo">
+                <h1 class="skids-brand">
+                    <span class="letter-s1">S</span><span class="letter-k">K</span><span class="letter-i">I</span><span class="letter-d">D</span><span class="letter-s2">S</span>
+                </h1>
+                <p class="hero-subtitle">Interactive Training Module - DEBUG VERSION</p>
+            </div>
+            <div class="hero-description">
+                <p>Debug version to test authentication and navigation flow.</p>
+                <button class="start-btn" onclick="testStartTraining()">
+                    <span class="play-icon">▶</span>
+                    Test Start Training
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Navigation -->
+    <nav class="training-nav" id="navigation">
+        <div class="nav-container">
+            <button class="nav-item active" onclick="showSection('brain-needs')" data-section="brain-needs">
+                <span class="nav-icon">🧠</span>
+                <span class="nav-title">Brain Needs</span>
+                <span class="nav-desc">Understanding Development</span>
+            </button>
+            <button class="nav-item" onclick="showSection('storyboards')" data-section="storyboards">
+                <span class="nav-icon">🎭</span>
+                <span class="nav-title">Family Stories</span>
+                <span class="nav-desc">Real Scenarios</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Training Sections -->
+    <section class="training-section active" id="brain-needs">
+        <div class="section-header">
+            <h2>🧠 Understanding Teen Brain Needs</h2>
+            <p>This is the brain needs section content.</p>
+        </div>
+    </section>
+
+    <section class="training-section" id="storyboards">
+        <div class="section-header">
+            <h2>🎭 Family Stories</h2>
+            <p>This is the storyboards section content.</p>
+        </div>
+    </section>
+
+    <!-- Load app.js -->
+    <script src="app.js"></script>
+    
+    <script>
+        let debugLog = [];
+        
+        function addDebugLog(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            debugLog.push({ timestamp, message, type });
+            updateDebugPanel();
+            console.log(`[${timestamp}] ${message}`);
+        }
+        
+        function updateDebugPanel() {
+            const logDiv = document.getElementById('debugLog');
+            logDiv.innerHTML = debugLog.slice(-10).map(entry => 
+                `<div class="debug-step debug-${entry.type}">[${entry.timestamp}] ${entry.message}</div>`
+            ).join('');
+        }
+        
+        function testFlow() {
+            addDebugLog('🧪 Starting test flow...');
+            
+            // Test 1: Check if user is logged in
+            if (typeof currentUser !== 'undefined' && currentUser) {
+                addDebugLog(`✅ User logged in: ${currentUser.email}`, 'success');
+            } else {
+                addDebugLog('❌ No user logged in', 'error');
+            }
+            
+            // Test 2: Check DOM elements
+            const landing = document.getElementById('landing');
+            const navigation = document.getElementById('navigation');
+            
+            addDebugLog(`Landing element: ${landing ? '✅ Found' : '❌ Missing'}`, landing ? 'success' : 'error');
+            addDebugLog(`Navigation element: ${navigation ? '✅ Found' : '❌ Missing'}`, navigation ? 'success' : 'error');
+            
+            if (navigation) {
+                const computedStyle = window.getComputedStyle(navigation);
+                addDebugLog(`Navigation display: ${computedStyle.display}`, 'info');
+                addDebugLog(`Navigation opacity: ${computedStyle.opacity}`, 'info');
+                addDebugLog(`Navigation classes: ${navigation.className}`, 'info');
+            }
+            
+            // Test 3: Check sections
+            const sections = document.querySelectorAll('.training-section');
+            addDebugLog(`Found ${sections.length} training sections`, 'info');
+        }
+        
+        function forceShowTraining() {
+            addDebugLog('🚀 Force showing training content...', 'warning');
+            
+            document.body.classList.add('force-show-training');
+            
+            const landing = document.getElementById('landing');
+            const navigation = document.getElementById('navigation');
+            
+            if (landing) {
+                landing.style.display = 'none';
+                addDebugLog('✅ Hidden landing page', 'success');
+            }
+            
+            if (navigation) {
+                navigation.style.display = 'block';
+                navigation.style.opacity = '1';
+                navigation.classList.add('visible');
+                addDebugLog('✅ Forced navigation visible', 'success');
+            }
+            
+            // Show first section
+            const firstSection = document.getElementById('brain-needs');
+            if (firstSection) {
+                firstSection.classList.add('active');
+                addDebugLog('✅ Activated first section', 'success');
+            }
+        }
+        
+        function resetView() {
+            addDebugLog('🔄 Resetting view...', 'info');
+            
+            document.body.classList.remove('force-show-training');
+            
+            const landing = document.getElementById('landing');
+            const navigation = document.getElementById('navigation');
+            
+            if (landing) {
+                landing.style.display = 'block';
+            }
+            
+            if (navigation) {
+                navigation.style.display = 'none';
+                navigation.style.opacity = '0';
+                navigation.classList.remove('visible');
+            }
+            
+            addDebugLog('✅ Reset complete', 'success');
+        }
+        
+        function testStartTraining() {
+            addDebugLog('🧪 Testing start training function...', 'info');
+            
+            if (typeof startTraining === 'function') {
+                addDebugLog('✅ startTraining function exists', 'success');
+                startTraining();
+            } else {
+                addDebugLog('❌ startTraining function not found', 'error');
+            }
+        }
+        
+        // Auto-run initial test
+        setTimeout(() => {
+            addDebugLog('🔍 Auto-running initial tests...');
+            testFlow();
+        }, 1000);
+        
+        // Monitor auth state changes
+        if (typeof firebase !== 'undefined' && firebase.auth) {
+            firebase.auth().onAuthStateChanged((user) => {
+                if (user) {
+                    addDebugLog(`🔐 Auth state changed: User logged in (${user.email})`, 'success');
+                } else {
+                    addDebugLog('🔐 Auth state changed: User logged out', 'warning');
+                }
+            });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔥 Firebase Setup Required</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            max-width: 800px; 
+            margin: 0 auto; 
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .alert { 
+            padding: 15px; 
+            margin: 20px 0; 
+            border-radius: 5px; 
+            border-left: 5px solid;
+        }
+        .error { 
+            background: #f8d7da; 
+            color: #721c24; 
+            border-color: #dc3545;
+        }
+        .warning { 
+            background: #fff3cd; 
+            color: #856404; 
+            border-color: #ffc107;
+        }
+        .success { 
+            background: #d4edda; 
+            color: #155724; 
+            border-color: #28a745;
+        }
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            margin: 10px 5px;
+            background: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .btn:hover { background: #0056b3; }
+        .btn-danger { background: #dc3545; }
+        .btn-danger:hover { background: #c82333; }
+        .btn-success { background: #28a745; }
+        .btn-success:hover { background: #218838; }
+        .code { 
+            background: #f8f9fa; 
+            padding: 15px; 
+            border-radius: 5px; 
+            font-family: monospace;
+            margin: 10px 0;
+            border: 1px solid #e9ecef;
+        }
+        h1 { color: #dc3545; }
+        h2 { color: #495057; }
+        .step { 
+            background: #e9ecef; 
+            padding: 15px; 
+            margin: 15px 0; 
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔥 Firebase Database Permission Fix Required</h1>
+        
+        <div class="alert error">
+            <strong>⚠️ Critical Issue:</strong> The SKIDS Training Module is working perfectly, but Firebase Firestore is blocking data operations due to restrictive security rules. User progress cannot be saved until this is fixed.
+        </div>
+
+        <div class="alert warning">
+            <strong>Current Status:</strong>
+            <ul>
+                <li>✅ Authentication system working</li>
+                <li>✅ Training content accessible</li>
+                <li>✅ UI functioning perfectly</li>
+                <li>❌ Data persistence blocked by Firebase rules</li>
+            </ul>
+        </div>
+
+        <h2>🚀 Quick Fix (5 minutes)</h2>
+        
+        <div class="step">
+            <h3>Step 1: Open Firebase Console</h3>
+            <a href="https://console.firebase.google.com/project/digital-parenting-app/firestore/rules" class="btn" target="_blank">
+                Open Firebase Rules Console
+            </a>
+            <p>This will take you directly to the Firestore Rules page for the digital-parenting-app project.</p>
+        </div>
+
+        <div class="step">
+            <h3>Step 2: Replace Current Rules</h3>
+            <p>Replace the existing rules with this secure configuration:</p>
+            <div class="code">
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Users can read/write their own user document
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Users can read/write their own progress
+    match /userProgress/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Users can write to sessions for tracking
+    match /sessions/{sessionId} {
+      allow create: if request.auth != null;
+      allow read, update, delete: if request.auth != null && 
+        (request.auth.uid == resource.data.userId || 
+         request.auth.token.email in ['admin@skids.com', 'admin@digiparenting.com']);
+    }
+    
+    // Schools collection - read access for all authenticated users
+    match /schools/{schoolId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && 
+        request.auth.token.email in ['admin@skids.com', 'admin@digiparenting.com'];
+    }
+    
+    // Analytics data - users can create, admins can read all
+    match /analytics/{docId} {
+      allow create: if request.auth != null;
+      allow read, update, delete: if request.auth != null && 
+        (request.auth.uid == resource.data.userId || 
+         request.auth.token.email in ['admin@skids.com', 'admin@digiparenting.com']);
+    }
+    
+    // Section completions - users can create/update their own
+    match /sectionCompletions/{completionId} {
+      allow create, update: if request.auth != null && 
+        request.auth.uid == request.resource.data.userId;
+      allow read: if request.auth != null && 
+        (request.auth.uid == resource.data.userId || 
+         request.auth.token.email in ['admin@skids.com', 'admin@digiparenting.com']);
+    }
+    
+    // Global settings - read for all authenticated, write for admins only
+    match /settings/{settingId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && 
+        request.auth.token.email in ['admin@skids.com', 'admin@digiparenting.com'];
+    }
+    
+    // Partner branding - read for all, write for admins
+    match /partnerBranding/{brandingId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && 
+        request.auth.token.email in ['admin@skids.com', 'admin@digiparenting.com'];
+    }
+  }
+}
+            </div>
+        </div>
+
+        <div class="step">
+            <h3>Step 3: Publish Rules</h3>
+            <p>Click the <strong>"Publish"</strong> button in the Firebase Console to activate the new rules.</p>
+        </div>
+
+        <div class="alert success">
+            <strong>After Publishing:</strong>
+            <ul>
+                <li>✅ User progress will save automatically</li>
+                <li>✅ Analytics tracking will work</li>
+                <li>✅ Admin dashboard will show real data</li>
+                <li>✅ No more permission errors</li>
+            </ul>
+        </div>
+
+        <h2>🧪 Test After Fix</h2>
+        <a href="index.html" class="btn btn-success">Test Main Application</a>
+        <a href="final-test.html" class="btn">Run Comprehensive Tests</a>
+
+        <h2>📋 Alternative Method</h2>
+        <div class="step">
+            <p>If you prefer command line:</p>
+            <div class="code">
+# Install Firebase CLI
+npm install -g firebase-tools
+
+# Login to Firebase
+firebase login
+
+# Deploy rules from this directory
+firebase init firestore
+firebase deploy --only firestore:rules
+            </div>
+        </div>
+
+        <div class="alert warning">
+            <strong>💡 Note:</strong> Until the rules are fixed, the app uses localStorage as fallback to save user progress locally. This means progress won't be lost, but won't sync across devices until Firebase is properly configured.
+        </div>
+
+        <hr>
+        <p><strong>Current Status:</strong> Application is <span style="color: #ffc107;">⚠️ PARTIALLY OPERATIONAL</span> - needs Firebase rules fix for full functionality.</p>
+        <p><strong>Time to Fix:</strong> ~5 minutes</p>
+        <p><strong>Impact:</strong> Critical for production use</p>
+    </div>
+</body>
+</html>

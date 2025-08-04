@@ -57,6 +57,13 @@ function initializeSkidsApp() {
       // Track user session
       trackUserSession(user);
       loadUserProgress(user.uid);
+      
+      // Auto-start training after successful authentication
+      // Add a small delay to ensure UI elements are ready
+      setTimeout(() => {
+        console.log('🚀 Auto-starting training after authentication...');
+        startTraining();
+      }, 1500);
     }
   });
   
@@ -688,26 +695,50 @@ function startTraining() {
   if (landing) {
     landing.style.display = 'none';
     console.log('✅ Hidden landing page');
+  } else {
+    console.warn('⚠️ Landing element not found');
   }
   
   if (navigation) {
     navigation.style.display = 'block';
+    navigation.style.opacity = '1';
     navigation.classList.add('visible');
-    console.log('✅ Showed navigation');
+    console.log('✅ Showed navigation with classes:', navigation.className);
+    
+    // Force visibility with inline styles as backup
+    navigation.style.setProperty('display', 'block', 'important');
+    navigation.style.setProperty('opacity', '1', 'important');
+  } else {
+    console.error('❌ Navigation element not found!');
+    return;
   }
   
   // Show the first training section
-  showSection('brain-needs');
-  console.log('✅ Showed brain-needs section');
+  const firstSection = document.getElementById('brain-needs');
+  if (firstSection) {
+    // Hide all sections first
+    const allSections = document.querySelectorAll('.training-section');
+    allSections.forEach(section => section.classList.remove('active'));
+    
+    // Show first section
+    firstSection.classList.add('active');
+    console.log('✅ Activated brain-needs section');
+  } else {
+    console.error('❌ First training section not found!');
+  }
   
   // Track training start
-  analytics.logEvent('training_start', {
-    user_id: currentUser.uid,
-    school: currentSchool || 'direct'
-  });
+  if (typeof analytics !== 'undefined') {
+    analytics.logEvent('training_start', {
+      user_id: currentUser.uid,
+      school: currentSchool || 'direct'
+    });
+  }
   
   // Scroll to top to ensure user sees the content
   window.scrollTo({ top: 0, behavior: 'smooth' });
+  
+  console.log('🎯 Training start complete');
 }
 
 function showSection(sectionId) {
