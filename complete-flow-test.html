@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SKIDS Complete Flow Test</title>
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- Firebase CDN Scripts -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-analytics-compat.js"></script>
+    
+    <style>
+        .flow-indicator {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            background: #007bff;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 5px;
+            z-index: 10000;
+            font-family: monospace;
+        }
+        .test-controls {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            background: white;
+            border: 2px solid #007bff;
+            border-radius: 8px;
+            padding: 15px;
+            z-index: 10000;
+        }
+        .test-controls button {
+            margin: 5px;
+            padding: 8px 12px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <!-- Flow Indicator -->
+    <div class="flow-indicator" id="flowIndicator">
+        Loading...
+    </div>
+    
+    <!-- Test Controls -->
+    <div class="test-controls">
+        <h4>🧪 Test Controls</h4>
+        <button onclick="simulateLogin()">Simulate Login</button>
+        <button onclick="forceShowTraining()">Force Training</button>
+        <button onclick="debugUIState()">Debug State</button>
+        <button onclick="resetToLanding()">Reset to Landing</button>
+    </div>
+
+    <!-- Auth Button -->
+    <div class="auth-container" id="authButton">
+        <button class="btn btn--primary" id="mainAuthBtn" onclick="openAuthModal()">
+            Sign In / Sign Up
+        </button>
+    </div>
+
+    <!-- Landing Page -->
+    <header class="hero-section" id="landing">
+        <div class="hero-content">
+            <div class="skids-logo">
+                <h1 class="skids-brand">
+                    <span class="letter-s1">S</span><span class="letter-k">K</span><span class="letter-i">I</span><span class="letter-d">D</span><span class="letter-s2">S</span>
+                </h1>
+                <p class="hero-subtitle">Interactive Training Module</p>
+            </div>
+            <div class="philosophy-banner">
+                <p class="philosophy-text">Every child is <strong>Smart, Kind, Incredible, Dynamic, and Special</strong></p>
+            </div>
+            <div class="hero-description">
+                <p>Transform challenging moments into connection opportunities with practical, brain-based parenting strategies.</p>
+                <button class="start-btn" onclick="testStartTraining()">
+                    <span class="play-icon">▶</span>
+                    Start Training (Test)
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Navigation -->
+    <nav class="training-nav" id="navigation">
+        <div class="nav-container">
+            <div class="progress-container">
+                <div class="progress-info">
+                    <span>Training Progress</span>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="mainProgress" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <button class="nav-item active" onclick="showSection('brain-needs')" data-section="brain-needs">
+                <span class="nav-icon">🧠</span>
+                <span class="nav-title">Brain Needs</span>
+                <span class="nav-desc">Understanding Development</span>
+            </button>
+            <button class="nav-item" onclick="showSection('storyboards')" data-section="storyboards">
+                <span class="nav-icon">🎭</span>
+                <span class="nav-title">Family Stories</span>
+                <span class="nav-desc">Real Scenarios</span>
+            </button>
+            <button class="nav-item" onclick="showSection('abcde-method')" data-section="abcde-method">
+                <span class="nav-icon">🔧</span>
+                <span class="nav-title">ABCDE Method</span>
+                <span class="nav-desc">Problem Solving</span>
+            </button>
+            <button class="nav-item" onclick="showSection('toolkit')" data-section="toolkit">
+                <span class="nav-icon">🎯</span>
+                <span class="nav-title">Practical Toolkit</span>
+                <span class="nav-desc">Daily Applications</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Training Sections -->
+    <section class="training-section active" id="brain-needs">
+        <div class="section-header">
+            <h2>🧠 Understanding Teen Brain Needs</h2>
+            <p class="section-intro">Learn about the developing adolescent brain and what teens really need from us.</p>
+        </div>
+        <div class="section-content">
+            <div class="need-grid">
+                <div class="need-card safety" onclick="expandNeed('safety')">
+                    <div class="need-icon">🛡️</div>
+                    <h3>Safety & Security</h3>
+                    <p>Physical and emotional safety foundation</p>
+                </div>
+                <div class="need-card connection" onclick="expandNeed('connection')">
+                    <div class="need-icon">💝</div>
+                    <h3>Connection & Belonging</h3>
+                    <p>Meaningful relationships and community</p>
+                </div>
+                <div class="need-card autonomy" onclick="expandNeed('autonomy')">
+                    <div class="need-icon">🎯</div>
+                    <h3>Autonomy & Independence</h3>
+                    <p>Age-appropriate freedom and choice</p>
+                </div>
+                <div class="need-card purpose" onclick="expandNeed('purpose')">
+                    <div class="need-icon">⭐</div>
+                    <h3>Purpose & Meaning</h3>
+                    <p>Understanding their place in the world</p>
+                </div>
+            </div>
+            
+            <!-- Need Details (initially hidden) -->
+            <div id="safety-details" class="need-details" style="display: none;">
+                <h4>🛡️ Safety & Security</h4>
+                <p>Teenagers need to feel physically and emotionally safe to thrive...</p>
+            </div>
+            <div id="connection-details" class="need-details" style="display: none;">
+                <h4>💝 Connection & Belonging</h4>
+                <p>Strong relationships are the foundation of healthy development...</p>
+            </div>
+            <div id="autonomy-details" class="need-details" style="display: none;">
+                <h4>🎯 Autonomy & Independence</h4>
+                <p>Teens need increasing independence while maintaining connection...</p>
+            </div>
+            <div id="purpose-details" class="need-details" style="display: none;">
+                <h4>⭐ Purpose & Meaning</h4>
+                <p>Understanding their identity and role in the world is crucial...</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="training-section" id="storyboards">
+        <div class="section-header">
+            <h2>🎭 Family Stories</h2>
+            <p class="section-intro">Real scenarios showing traditional vs. SKIDS approaches.</p>
+        </div>
+        <div class="section-content">
+            <div class="storyboard-container">
+                <div class="story-card">
+                    <h3>📱 Screen Time Conflict</h3>
+                    <p>Sarah, 15, refuses to put her phone away during family dinner...</p>
+                    <div class="response-tabs">
+                        <button class="response-tab active" onclick="showResponse('screen', 'traditional')">Traditional</button>
+                        <button class="response-tab" onclick="showResponse('screen', 'skids')">SKIDS Approach</button>
+                    </div>
+                    <div class="response-content">
+                        <div id="screen-traditional" class="response-panel active">
+                            <p><strong>Traditional:</strong> "Put that phone away right now! No phones at dinner!"</p>
+                        </div>
+                        <div id="screen-skids" class="response-panel">
+                            <p><strong>SKIDS:</strong> "I notice you're really engaged with your phone. Help me understand what's happening that feels important to you right now."</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="training-section" id="abcde-method">
+        <div class="section-header">
+            <h2>🔧 ABCDE Method</h2>
+            <p class="section-intro">A structured approach to handling challenging situations.</p>
+        </div>
+        <div class="section-content">
+            <div class="method-steps">
+                <div class="step-card" onclick="showABCDEStep('acknowledge')">
+                    <div class="step-letter">A</div>
+                    <h3>Acknowledge</h3>
+                    <p>Recognize and validate feelings</p>
+                </div>
+                <div class="step-card" onclick="showABCDEStep('breathe')">
+                    <div class="step-letter">B</div>
+                    <h3>Breathe</h3>
+                    <p>Pause and regulate emotions</p>
+                </div>
+                <div class="step-card" onclick="showABCDEStep('connect')">
+                    <div class="step-letter">C</div>
+                    <h3>Connect</h3>
+                    <p>Build understanding and empathy</p>
+                </div>
+                <div class="step-card" onclick="showABCDEStep('decide')">
+                    <div class="step-letter">D</div>
+                    <h3>Decide</h3>
+                    <p>Choose appropriate response</p>
+                </div>
+                <div class="step-card" onclick="showABCDEStep('engage')">
+                    <div class="step-letter">E</div>
+                    <h3>Engage</h3>
+                    <p>Take action with compassion</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="training-section" id="toolkit">
+        <div class="section-header">
+            <h2>🎯 Practical Toolkit</h2>
+            <p class="section-intro">Ready-to-use strategies for daily parenting challenges.</p>
+        </div>
+        <div class="section-content">
+            <div class="tool-grid">
+                <div class="tool-card">
+                    <h3>🗣️ Connection Before Correction</h3>
+                    <p>Build relationship before addressing behavior</p>
+                </div>
+                <div class="tool-card">
+                    <h3>🤝 Collaborative Problem Solving</h3>
+                    <p>Work together to find solutions</p>
+                </div>
+                <div class="tool-card">
+                    <h3>🎭 Emotion Coaching</h3>
+                    <p>Help teens understand and manage feelings</p>
+                </div>
+                <div class="tool-card">
+                    <h3>🌟 Strength-Based Focus</h3>
+                    <p>Highlight capabilities and potential</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Load app.js -->
+    <script src="app.js"></script>
+    
+    <script>
+        // Enhanced flow tracking
+        let currentFlow = 'landing';
+        
+        function updateFlowIndicator(flow) {
+            currentFlow = flow;
+            const indicator = document.getElementById('flowIndicator');
+            const flows = {
+                landing: '🏠 Landing Page',
+                authenticating: '🔐 Authenticating...',
+                authenticated: '✅ Authenticated',
+                training: '📚 Training Mode'
+            };
+            indicator.textContent = flows[flow] || flow;
+        }
+        
+        function simulateLogin() {
+            console.log('🧪 Simulating successful login...');
+            updateFlowIndicator('authenticating');
+            
+            // Create a mock user
+            window.currentUser = {
+                uid: 'test-user-123',
+                email: 'test@example.com',
+                displayName: 'Test User'
+            };
+            
+            updateFlowIndicator('authenticated');
+            
+            // Trigger the authentication flow
+            setTimeout(() => {
+                console.log('🚀 Auto-starting training after simulated login...');
+                startTraining();
+                updateFlowIndicator('training');
+            }, 1000);
+        }
+        
+        function testStartTraining() {
+            console.log('🧪 Testing start training function...');
+            
+            if (!currentUser) {
+                console.log('No user - simulating login first...');
+                simulateLogin();
+            } else {
+                startTraining();
+                updateFlowIndicator('training');
+            }
+        }
+        
+        function resetToLanding() {
+            console.log('🔄 Resetting to landing page...');
+            
+            const landing = document.getElementById('landing');
+            const navigation = document.getElementById('navigation');
+            
+            if (landing) {
+                landing.style.display = 'block';
+            }
+            
+            if (navigation) {
+                navigation.style.display = 'none';
+                navigation.classList.remove('visible');
+            }
+            
+            // Hide all sections
+            const sections = document.querySelectorAll('.training-section');
+            sections.forEach(section => section.classList.remove('active'));
+            
+            updateFlowIndicator('landing');
+            window.currentUser = null;
+        }
+        
+        // Monitor auth state changes
+        if (typeof firebase !== 'undefined' && firebase.auth) {
+            firebase.auth().onAuthStateChanged((user) => {
+                if (user) {
+                    updateFlowIndicator('authenticated');
+                    console.log('🔐 Real auth state changed: User logged in');
+                } else {
+                    updateFlowIndicator('landing');
+                    console.log('🔐 Real auth state changed: User logged out');
+                }
+            });
+        }
+        
+        // Initialize
+        updateFlowIndicator('landing');
+    </script>
+</body>
+</html>

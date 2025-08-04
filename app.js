@@ -47,6 +47,12 @@ const ADMIN_EMAIL = 'admin@skids.health'; // Change this to your admin email
 
 // Initialize application
 function initializeSkidsApp() {
+  // Initialize session tracking
+  initializeSessionTracking();
+  
+  // Add certificate button styles
+  addCertificateButtonStyles();
+  
   // Listen for authentication state changes
   auth.onAuthStateChanged((user) => {
     currentUser = user;
@@ -72,6 +78,17 @@ function initializeSkidsApp() {
   initializeProgressTracking();
   initializeModals();
   initializeTooltips();
+}
+
+function initializeSessionTracking() {
+  // Initialize session data if not exists
+  const sessionData = JSON.parse(localStorage.getItem('skids_session_data') || '{}');
+  if (!sessionData.started) {
+    sessionData.started = new Date().toISOString();
+    sessionData.sections_visited = [];
+    sessionData.interactions = 0;
+    localStorage.setItem('skids_session_data', JSON.stringify(sessionData));
+  }
 }
 
 // Authentication Functions
@@ -298,6 +315,7 @@ function updateUIForAuthState() {
 async function trackSectionComplete(sectionId) {
   if (!currentUser) return;
   
+  // Mark section as complete
   trainingProgress[sectionId] = true;
   updateProgressBar();
   
@@ -346,6 +364,78 @@ async function trackSectionComplete(sectionId) {
       localStorage.setItem('skids_progress', JSON.stringify(trainingProgress));
     }
   }
+
+  // Check if all sections are completed
+  const completed = Object.values(trainingProgress).filter(Boolean).length;
+  const total = Object.keys(trainingProgress).length;
+  
+  if (completed === total) {
+    // All sections completed - trigger certificate eligibility
+    setTimeout(() => {
+      showCertificateEligibilityNotification();
+    }, 1000);
+    
+    // Track training completion
+    analytics.logEvent('training_completed', {
+      user_id: currentUser.uid,
+      school: currentSchool || 'direct',
+      sections_completed: completed,
+      completion_time: new Date().toISOString()
+    });
+    
+    // Update session data for completion tracking
+    const sessionData = JSON.parse(localStorage.getItem('skids_session_data') || '{}');
+    sessionData.completed = new Date().toISOString();
+    sessionData.sections_completed = completed;
+    localStorage.setItem('skids_session_data', JSON.stringify(sessionData));
+  } else {
+    // Show progress notification
+    showNotification(`Section completed! ${completed}/${total} sections finished.`, 'success');
+  }
+}
+
+function showCertificateEligibilityNotification() {
+  // Create a special notification for certificate eligibility
+  const notification = document.createElement('div');
+  notification.className = 'notification notification--certificate';
+  notification.innerHTML = `
+    <div class="certificate-notification-content">
+      <div class="certificate-notification-icon">🎉</div>
+      <div class="certificate-notification-text">
+        <strong>Congratulations!</strong><br>
+        You've completed all training sections and are now eligible to generate your completion certificate!
+      </div>
+      <button class="btn btn--small btn--primary" onclick="generateCertificate(); this.closest('.notification').remove();">
+        Generate Certificate
+      </button>
+    </div>
+    <button class="notification-close" onclick="this.parentElement.remove()">×</button>
+  `;
+  
+  // Add special styling for certificate notification
+  notification.style.cssText = `
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    max-width: 400px;
+    padding: 20px;
+    background: linear-gradient(135deg, #10B981, #059669);
+    color: white;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(16, 185, 129, 0.4);
+    z-index: 10001;
+    animation: certificateSlideIn 0.6s ease-out;
+  `;
+  
+  document.body.appendChild(notification);
+  
+  // Auto remove after 10 seconds (longer for certificate notification)
+  setTimeout(() => {
+    if (notification.parentElement) {
+      notification.style.animation = 'certificateSlideOut 0.4s ease-in forwards';
+      setTimeout(() => notification.remove(), 400);
+    }
+  }, 10000);
 }
 
 async function loadUserProgress(userId) {
@@ -412,6 +502,47 @@ function updateProgressBar() {
       navItem.classList.toggle('completed', trainingProgress[sectionId]);
     }
   });
+  
+  // Update certificate button visibility and state
+  updateCertificateButtonState(completed, total);
+}
+
+function updateCertificateButtonState(completed, total) {
+  // Find the certificate generation button
+  const certButton = document.querySelector('button[onclick="generateCertificate()"]');
+  if (certButton) {
+    if (completed === total) {
+      // All sections completed - make button prominent
+      certButton.classList.add('certificate-ready');
+      certButton.innerHTML = '🎉 Generate Your Completion Certificate!';
+      certButton.style.cssText = `
+        background: linear-gradient(135deg, #10B981, #059669);
+        color: white;
+        border: none;
+        padding: 16px 32px;
+        font-size: 18px;
+        font-weight: bold;
+        border-radius: 12px;
+        box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
+        transform: scale(1.05);
+        animation: certificateButtonPulse 2s ease-in-out infinite alternate;
+      `;
+    } else {
+      // Not all sections completed - show progress
+      certButton.classList.remove('certificate-ready');
+      certButton.innerHTML = `🏆 Complete Training for Certificate (${completed}/${total})`;
+      certButton.style.cssText = `
+        background: #CBD5E0;
+        color: #4A5568;
+        border: 2px dashed #A0AEC0;
+        padding: 12px 24px;
+        font-size: 16px;
+        border-radius: 8px;
+        cursor: not-allowed;
+        opacity: 0.7;
+      `;
+    }
+  }
 }
 
 function resetProgress() {
@@ -419,6 +550,32 @@ function resetProgress() {
     trainingProgress[section] = false;
   });
   updateProgressBar();
+}
+
+// Add certificate button pulse animation via CSS injection
+function addCertificateButtonStyles() {
+  if (!document.getElementById('certificate-button-styles')) {
+    const style = document.createElement('style');
+    style.id = 'certificate-button-styles';
+    style.textContent = `
+      @keyframes certificateButtonPulse {
+        from {
+          box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
+          transform: scale(1.05);
+        }
+        to {
+          box-shadow: 0 12px 35px rgba(16, 185, 129, 0.6);
+          transform: scale(1.08);
+        }
+      }
+      
+      .certificate-ready:hover {
+        transform: scale(1.1) !important;
+        box-shadow: 0 12px 40px rgba(16, 185, 129, 0.5) !important;
+      }
+    `;
+    document.head.appendChild(style);
+  }
 }
 
 // Track user session
@@ -818,31 +975,402 @@ function generateCertificate() {
   const total = Object.keys(trainingProgress).length;
   
   if (completed < total) {
-    showNotification(`Please complete all ${total} sections to generate a certificate. You have completed ${completed}/${total} sections.`, 'warning');
+    const remaining = total - completed;
+    const completedSections = Object.keys(trainingProgress).filter(key => trainingProgress[key]);
+    const remainingSections = Object.keys(trainingProgress).filter(key => !trainingProgress[key]);
+    
+    showNotification(
+      `Please complete all ${total} sections to generate a certificate. ` +
+      `You have completed ${completed}/${total} sections. ` +
+      `Remaining: ${remainingSections.map(s => s.replace('-', ' ')).join(', ')}`, 
+      'warning'
+    );
     return;
   }
+
+  // Update certificate with user info and enhanced details
+  const userName = currentUser.displayName || currentUser.email;
+  const completionDate = new Date().toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long', 
+    day: 'numeric'
+  });
   
-  // Update certificate with user info
-  document.getElementById('certificateName').textContent = currentUser.displayName || currentUser.email;
-  document.getElementById('certificateDate').textContent = new Date().toLocaleDateString();
+  document.getElementById('certificateName').textContent = userName;
+  document.getElementById('certificateDate').textContent = completionDate;
+
+  // Add completion details to certificate
+  updateCertificateDetails();
   
   // Show certificate modal
   document.getElementById('certificateModal').classList.remove('hidden');
   
-  // Track certificate generation
+  // Track certificate generation with detailed analytics
   analytics.logEvent('certificate_generated', {
     user_id: currentUser.uid,
-    school: currentSchool || 'direct'
+    school: currentSchool || 'direct',
+    completion_date: completionDate,
+    sections_completed: completed,
+    user_name: userName,
+    training_duration: calculateTrainingDuration()
   });
+
+  // Update user progress with certificate generation
+  if (db) {
+    try {
+      const userRef = db.collection('users').doc(currentUser.uid);
+      userRef.update({
+        'progress.certificate_generated': true,
+        'progress.certificate_generated_date': firebase.firestore.FieldValue.serverTimestamp(),
+        'progress.completion_verified': true
+      }).catch(() => {
+        // Fallback to localStorage
+        const localProgress = JSON.parse(localStorage.getItem('skids_progress') || '{}');
+        localProgress.certificate_generated = true;
+        localProgress.certificate_generated_date = new Date().toISOString();
+        localProgress.completion_verified = true;
+        localStorage.setItem('skids_progress', JSON.stringify(localProgress));
+      });
+    } catch (error) {
+      console.error('Error updating certificate status:', error);
+    }
+  }
+
+  showNotification('🎉 Congratulations! Your completion certificate has been generated.', 'success');
+}
+
+function updateCertificateDetails() {
+  // Add completion badge and details to the certificate
+  const certificate = document.getElementById('certificate');
+  
+  // Remove any existing completion badge
+  const existingBadge = certificate.querySelector('.completion-badge');
+  if (existingBadge) {
+    existingBadge.remove();
+  }
+  
+  // Add completion badge
+  const completionBadge = document.createElement('div');
+  completionBadge.className = 'completion-badge';
+  completionBadge.innerHTML = '✓ COMPLETED';
+  certificate.appendChild(completionBadge);
+  
+  // Update certificate description with completion details
+  const description = certificate.querySelector('.certificate-description');
+  if (description) {
+    const sectionsCompleted = Object.keys(trainingProgress).filter(key => trainingProgress[key]);
+    const sectionNames = {
+      'brain-needs': 'Brain Development Needs',
+      'storyboards': 'Interactive Storyboards', 
+      'abcde-method': 'ABCDE Method',
+      'toolkit': 'Digital Parenting Toolkit'
+    };
+    
+    description.innerHTML = `
+      Understanding Teen Brain Development Needs, Family Communication Strategies, and the ABCDE Problem-Solving Method
+      <br><br>
+      <strong>Completed Sections:</strong><br>
+      ${sectionsCompleted.map(section => sectionNames[section] || section).join(' • ')}
+    `;
+  }
+}
+
+function calculateTrainingDuration() {
+  // Calculate approximate training duration based on localStorage timestamps
+  try {
+    const sessionData = JSON.parse(localStorage.getItem('skids_session_data') || '{}');
+    if (sessionData.started && sessionData.completed) {
+      const start = new Date(sessionData.started);
+      const end = new Date(sessionData.completed);
+      return Math.round((end - start) / (1000 * 60)); // Duration in minutes
+    }
+  } catch (error) {
+    console.error('Error calculating training duration:', error);
+  }
+  return null;
 }
 
 function closeCertificateModal() {
   document.getElementById('certificateModal').classList.add('hidden');
 }
 
+// Enhanced certificate validation
+function validateCertificateEligibility() {
+  if (!currentUser) {
+    return { eligible: false, reason: 'User not logged in' };
+  }
+  
+  const completed = Object.values(trainingProgress).filter(Boolean).length;
+  const total = Object.keys(trainingProgress).length;
+  
+  if (completed < total) {
+    const remainingSections = Object.keys(trainingProgress).filter(key => !trainingProgress[key]);
+    return { 
+      eligible: false, 
+      reason: `${total - completed} sections remaining: ${remainingSections.join(', ')}`,
+      completed: completed,
+      total: total,
+      remaining: remainingSections
+    };
+  }
+  
+  return { eligible: true, completed: completed, total: total };
+}
+
+// Function to check if user has already generated a certificate
+function hasCertificate() {
+  // Check localStorage first
+  const localProgress = JSON.parse(localStorage.getItem('skids_progress') || '{}');
+  if (localProgress.certificate_generated) {
+    return true;
+  }
+  
+  // Could also check database when available
+  return false;
+}
+
 function downloadCertificate() {
-  // This would implement certificate download functionality
-  showNotification('Certificate download feature coming soon!', 'info');
+  if (!currentUser) {
+    showNotification('Please sign in to download your certificate.', 'error');
+    return;
+  }
+
+  // Verify all sections are completed
+  const completed = Object.values(trainingProgress).filter(Boolean).length;
+  const total = Object.keys(trainingProgress).length;
+  
+  if (completed < total) {
+    showNotification(`Certificate can only be downloaded after completing all ${total} sections.`, 'warning');
+    return;
+  }
+
+  try {
+    // Create a printable version
+    const certificateElement = document.getElementById('certificate');
+    const userName = currentUser.displayName || currentUser.email;
+    const completionDate = new Date().toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long', 
+      day: 'numeric'
+    });
+    
+    // Enhanced certificate content for download
+    const downloadContent = `
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SKIDS Training Certificate - ${userName}</title>
+    <style>
+        @page { size: letter; margin: 0.5in; }
+        body { 
+            font-family: 'Arial', sans-serif; 
+            line-height: 1.6; 
+            margin: 0; 
+            padding: 20px;
+            background: white;
+        }
+        .certificate {
+            border: 8px solid #20B2AA;
+            border-radius: 20px;
+            padding: 60px 40px;
+            text-align: center;
+            background: linear-gradient(135deg, #f8fffe 0%, #e6fffe 100%);
+            margin: 20px auto;
+            max-width: 700px;
+            box-shadow: 0 0 30px rgba(32, 178, 170, 0.3);
+            position: relative;
+            min-height: 500px;
+        }
+        .certificate::before {
+            content: '';
+            position: absolute;
+            top: 15px; left: 15px; right: 15px; bottom: 15px;
+            border: 2px solid #20B2AA;
+            border-radius: 12px;
+        }
+        .certificate-logo {
+            margin-bottom: 30px;
+        }
+        .skids-brand-large {
+            font-size: 48px;
+            font-weight: bold;
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+        }
+        .skids-brand-large .letter-s1 { color: #E53E3E; }
+        .skids-brand-large .letter-k { color: #FF8C00; }
+        .skids-brand-large .letter-i { color: #FFD700; }
+        .skids-brand-large .letter-d { color: #38A169; }
+        .skids-brand-large .letter-s2 { color: #3182CE; }
+        .certificate h1 {
+            color: #20B2AA;
+            font-size: 36px;
+            margin: 30px 0;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .certificate-text {
+            font-size: 18px;
+            color: #4A5568;
+            margin: 15px 0;
+        }
+        .certificate-name {
+            font-size: 32px;
+            font-weight: bold;
+            color: #2D3748;
+            margin: 25px 0;
+            padding: 15px 0;
+            border-bottom: 3px solid #20B2AA;
+            display: inline-block;
+            min-width: 350px;
+        }
+        .certificate-course {
+            font-size: 24px;
+            color: #20B2AA;
+            font-weight: bold;
+            margin: 25px 0;
+        }
+        .certificate-description {
+            font-size: 16px;
+            color: #718096;
+            font-style: italic;
+            margin: 20px 0 40px 0;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .certificate-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-top: 50px;
+            padding-top: 30px;
+            border-top: 1px solid #E2E8F0;
+        }
+        .certificate-date {
+            font-size: 16px;
+            color: #4A5568;
+        }
+        .certificate-signature {
+            text-align: center;
+        }
+        .signature-line {
+            width: 200px;
+            height: 3px;
+            background: #20B2AA;
+            margin-bottom: 10px;
+        }
+        .completion-badge {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: #20B2AA;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 25px;
+            font-weight: bold;
+            font-size: 12px;
+        }
+        .sections-completed {
+            margin: 30px 0;
+            font-size: 14px;
+            color: #4A5568;
+        }
+        @media print {
+            .certificate { 
+                box-shadow: none; 
+                margin: 0;
+                page-break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="certificate">
+        <div class="completion-badge">✓ COMPLETED</div>
+        <div class="certificate-logo">
+            <div class="skids-brand-large">
+                <span class="letter-s1">S</span><span class="letter-k">K</span><span class="letter-i">I</span><span class="letter-d">D</span><span class="letter-s2">S</span>
+            </div>
+        </div>
+        <h1>Certificate of Completion</h1>
+        <p class="certificate-text">This certifies that</p>
+        <div class="certificate-name">${userName}</div>
+        <p class="certificate-text">has successfully completed the</p>
+        <h2 class="certificate-course">SKIDS Interactive Training Module</h2>
+        <p class="certificate-description">Understanding Teen Brain Development Needs, Family Communication Strategies, and the ABCDE Problem-Solving Method</p>
+        <div class="sections-completed">
+            <strong>Completed Sections:</strong> Brain Development Needs • Interactive Storyboards • ABCDE Method • Digital Parenting Toolkit
+        </div>
+        <div class="certificate-footer">
+            <div class="certificate-date">
+                <strong>Date of Completion:</strong><br>
+                ${completionDate}
+            </div>
+            <div class="certificate-signature">
+                <div class="signature-line"></div>
+                <p><strong>SKIDS Training Team</strong><br>
+                <small>Certified Digital Parenting Program</small></p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>`;
+
+    // Create and download the certificate
+    const blob = new Blob([downloadContent], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `SKIDS-Training-Certificate-${userName.replace(/[^a-zA-Z0-9]/g, '-')}-${new Date().getFullYear()}.html`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    // Track certificate download
+    analytics.logEvent('certificate_downloaded', {
+      user_id: currentUser.uid,
+      school: currentSchool || 'direct',
+      completion_date: completionDate,
+      sections_completed: completed
+    });
+
+    // Save certificate generation to user record
+    if (db) {
+      try {
+        const userRef = db.collection('users').doc(currentUser.uid);
+        userRef.update({
+          'certificates.skids_training': {
+            generated: firebase.firestore.FieldValue.serverTimestamp(),
+            downloaded: firebase.firestore.FieldValue.serverTimestamp(),
+            completionDate: completionDate,
+            sectionsCompleted: completed,
+            school: currentSchool || 'direct'
+          }
+        }).catch(() => {
+          // Fallback to localStorage if database permissions aren't ready
+          const certificates = JSON.parse(localStorage.getItem('skids_certificates') || '{}');
+          certificates.skids_training = {
+            generated: new Date().toISOString(),
+            downloaded: new Date().toISOString(),
+            completionDate: completionDate,
+            sectionsCompleted: completed,
+            school: currentSchool || 'direct'
+          };
+          localStorage.setItem('skids_certificates', JSON.stringify(certificates));
+        });
+      } catch (error) {
+        console.error('Error saving certificate record:', error);
+      }
+    }
+
+    showNotification('Certificate downloaded successfully! You can print it or save it as a PDF.', 'success');
+
+  } catch (error) {
+    console.error('Error downloading certificate:', error);
+    showNotification('Error downloading certificate. Please try again.', 'error');
+  }
 }
 
 // Utility Functions
