@@ -1805,18 +1805,18 @@ function expandNeed(needId) {
   const card = document.querySelector(`.need-card.${needId}`);
   
   if (details && card) {
-    const isExpanded = details.style.display === 'block';
+    const isExpanded = details.classList.contains('active');
     
     // Close all other need details
     document.querySelectorAll('.need-details').forEach(detail => {
-      detail.style.display = 'none';
+      detail.classList.remove('active');
     });
     document.querySelectorAll('.need-card').forEach(c => {
       c.classList.remove('expanded');
     });
     
     if (!isExpanded) {
-      details.style.display = 'block';
+      details.classList.add('active');
       card.classList.add('expanded');
       
       // Track section interaction

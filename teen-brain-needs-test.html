@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teen Brain Needs - Functionality Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .test-header {
+            background: #20B2AA;
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        .brain-needs-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .need-card {
+            background: white;
+            border: 2px solid #ddd;
+            border-radius: 12px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .need-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+            border-color: #20B2AA;
+        }
+        .need-card.expanded {
+            border-color: #20B2AA;
+            background: #f8fffe;
+        }
+        .need-icon {
+            font-size: 3rem;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        .need-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+            color: #2D3748;
+        }
+        .need-card p {
+            color: #666;
+            margin-bottom: 15px;
+        }
+        .need-details {
+            max-height: 0;
+            overflow: hidden;
+            transition: all 0.5s ease;
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 2px solid transparent;
+            opacity: 0;
+        }
+        .need-details.active {
+            max-height: 800px;
+            border-top-color: #20B2AA;
+            opacity: 1;
+        }
+        .examples-list h4 {
+            color: #20B2AA;
+            margin-bottom: 12px;
+            font-size: 1.2rem;
+        }
+        .examples-list ul {
+            list-style: none;
+            padding: 0;
+        }
+        .examples-list li {
+            padding: 8px 0;
+            position: relative;
+            padding-left: 20px;
+        }
+        .examples-list li::before {
+            content: '✨';
+            position: absolute;
+            left: 0;
+            color: #20B2AA;
+        }
+        .insight-box {
+            background: rgba(32, 178, 170, 0.1);
+            border-left: 4px solid #20B2AA;
+            padding: 16px;
+            border-radius: 8px;
+            font-style: italic;
+            line-height: 1.6;
+            margin-top: 15px;
+        }
+        .test-controls {
+            background: #f5f5f5;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .test-button {
+            background: #20B2AA;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .test-button:hover {
+            background: #178B87;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .info { background: #d1ecf1; color: #0c5460; }
+    </style>
+</head>
+<body>
+    <div class="test-header">
+        <h1>🧠 Teen Brain Needs - Functionality Test</h1>
+        <p>Testing the enhanced content with detailed examples and insights</p>
+    </div>
+
+    <div class="test-controls">
+        <h3>🧪 Test Controls</h3>
+        <button class="test-button" onclick="testAllCards()">Test All Cards</button>
+        <button class="test-button" onclick="closeAllCards()">Close All Cards</button>
+        <button class="test-button" onclick="checkImplementation()">Check Implementation</button>
+        <div id="test-results"></div>
+    </div>
+
+    <div class="brain-needs-grid">
+        <div class="need-card exploration" onclick="expandNeed('exploration')">
+            <div class="need-icon">🚀</div>
+            <h3>Exploration & Risk-Taking</h3>
+            <p>The brain is wired for novelty and new experiences</p>
+            <div class="need-details" id="exploration-details">
+                <div class="examples-list">
+                    <h4>Real Examples:</h4>
+                    <ul>
+                        <li>Starting a graffiti art project on legal walls</li>
+                        <li>Learning electric guitar and joining a band</li>
+                        <li>Trying skateboarding or rock climbing</li>
+                        <li>Taking challenging advanced courses</li>
+                        <li>Starting a school newspaper or blog</li>
+                        <li>Organizing a new school club</li>
+                    </ul>
+                </div>
+                <div class="insight-box">
+                    <strong>SKIDS Insight:</strong> When teens seem "reckless," they're actually developing independence and discovering their capabilities. Our role is to provide safe channels for this essential drive.
+                </div>
+            </div>
+        </div>
+
+        <div class="need-card meaning" onclick="expandNeed('meaning')">
+            <div class="need-icon">❤️</div>
+            <h3>Meaning & Purpose</h3>
+            <p>Finding ways to contribute and make a difference</p>
+            <div class="need-details" id="meaning-details">
+                <div class="examples-list">
+                    <h4>Real Examples:</h4>
+                    <ul>
+                        <li>Volunteering at animal shelters or food banks</li>
+                        <li>Starting environmental action projects</li>
+                        <li>Tutoring younger students</li>
+                        <li>Writing for the school magazine</li>
+                        <li>Organizing community awareness campaigns</li>
+                        <li>Mentoring peers through difficult times</li>
+                    </ul>
+                </div>
+                <div class="insight-box">
+                    <strong>SKIDS Insight:</strong> Teens have an incredible capacity for empathy and social contribution. When we help them find meaningful ways to contribute, behavioral issues often resolve naturally.
+                </div>
+            </div>
+        </div>
+
+        <div class="need-card identity" onclick="expandNeed('identity')">
+            <div class="need-icon">🎨</div>
+            <h3>Values & Identity</h3>
+            <p>Figuring out who they are and who they want to be</p>
+            <div class="need-details" id="identity-details">
+                <div class="examples-list">
+                    <h4>Real Examples:</h4>
+                    <ul>
+                        <li>Exploring fashion and personal style</li>
+                        <li>Career exploration through internships</li>
+                        <li>Questioning and exploring spiritual beliefs</li>
+                        <li>Developing political awareness and opinions</li>
+                        <li>Celebrating cultural identity and heritage</li>
+                        <li>Experimenting with different friend groups</li>
+                    </ul>
+                </div>
+                <div class="insight-box">
+                    <strong>SKIDS Insight:</strong> Identity formation is the central task of adolescence. What looks like "phase" behavior is actually deep developmental work that deserves our respect and curiosity.
+                </div>
+            </div>
+        </div>
+
+        <div class="need-card respect" onclick="expandNeed('respect')">
+            <div class="need-icon">🤝</div>
+            <h3>Respect & Social Status</h3>
+            <p>Being seen, valued, and accepted by peers and adults</p>
+            <div class="need-details" id="respect-details">
+                <div class="examples-list">
+                    <h4>Real Examples:</h4>
+                    <ul>
+                        <li>Taking on leadership roles in school</li>
+                        <li>Building a positive social media presence</li>
+                        <li>Standing up for others as an ally</li>
+                        <li>Earning recognition for talents and achievements</li>
+                        <li>Building genuine friendships based on shared interests</li>
+                        <li>Contributing unique perspectives in group discussions</li>
+                    </ul>
+                </div>
+                <div class="insight-box">
+                    <strong>SKIDS Insight:</strong> The teenage brain is exquisitely tuned to social dynamics. When teens feel genuinely respected by the adults in their lives, they're more likely to make positive choices.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function expandNeed(needId) {
+            const details = document.getElementById(`${needId}-details`);
+            const card = document.querySelector(`.need-card.${needId}`);
+            
+            if (details && card) {
+                const isExpanded = details.classList.contains('active');
+                
+                // Close all other need details
+                document.querySelectorAll('.need-details').forEach(detail => {
+                    detail.classList.remove('active');
+                });
+                document.querySelectorAll('.need-card').forEach(c => {
+                    c.classList.remove('expanded');
+                });
+                
+                if (!isExpanded) {
+                    details.classList.add('active');
+                    card.classList.add('expanded');
+                    
+                    addTestResult(`✅ Opened ${needId} card successfully`, 'success');
+                } else {
+                    addTestResult(`ℹ️ Closed ${needId} card`, 'info');
+                }
+            } else {
+                addTestResult(`❌ Failed to find elements for ${needId}`, 'error');
+            }
+        }
+
+        function testAllCards() {
+            const cards = ['exploration', 'meaning', 'identity', 'respect'];
+            let delay = 0;
+            
+            addTestResult('🧪 Testing all cards sequentially...', 'info');
+            
+            cards.forEach((cardId, index) => {
+                setTimeout(() => {
+                    expandNeed(cardId);
+                    if (index === cards.length - 1) {
+                        setTimeout(() => {
+                            addTestResult('✅ All cards tested successfully!', 'success');
+                        }, 1000);
+                    }
+                }, delay);
+                delay += 1500;
+            });
+        }
+
+        function closeAllCards() {
+            document.querySelectorAll('.need-details').forEach(detail => {
+                detail.classList.remove('active');
+            });
+            document.querySelectorAll('.need-card').forEach(card => {
+                card.classList.remove('expanded');
+            });
+            addTestResult('🔒 All cards closed', 'info');
+        }
+
+        function checkImplementation() {
+            const results = [];
+            
+            // Check if all cards exist
+            const cardIds = ['exploration', 'meaning', 'identity', 'respect'];
+            cardIds.forEach(id => {
+                const card = document.querySelector(`.need-card.${id}`);
+                const details = document.getElementById(`${id}-details`);
+                
+                if (card && details) {
+                    results.push(`✅ ${id} card: Structure OK`);
+                    
+                    // Check content
+                    const examples = details.querySelectorAll('.examples-list li');
+                    const insight = details.querySelector('.insight-box');
+                    
+                    if (examples.length >= 6) {
+                        results.push(`✅ ${id} card: Has ${examples.length} examples`);
+                    } else {
+                        results.push(`⚠️ ${id} card: Only ${examples.length} examples`);
+                    }
+                    
+                    if (insight) {
+                        results.push(`✅ ${id} card: Has SKIDS insight`);
+                    } else {
+                        results.push(`❌ ${id} card: Missing SKIDS insight`);
+                    }
+                } else {
+                    results.push(`❌ ${id} card: Missing elements`);
+                }
+            });
+            
+            clearTestResults();
+            results.forEach(result => {
+                const type = result.includes('✅') ? 'success' : result.includes('⚠️') ? 'info' : 'error';
+                addTestResult(result, type);
+            });
+        }
+
+        function addTestResult(message, type) {
+            const container = document.getElementById('test-results');
+            const result = document.createElement('div');
+            result.className = `status ${type}`;
+            result.textContent = message;
+            container.appendChild(result);
+        }
+
+        function clearTestResults() {
+            document.getElementById('test-results').innerHTML = '';
+        }
+
+        // Auto-run implementation check on load
+        window.addEventListener('load', () => {
+            setTimeout(checkImplementation, 500);
+        });
+    </script>
+</body>
+</html>
